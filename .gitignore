@@ -1,0 +1,103 @@
+# ─── Project-specific ────────────────────────────────────────────────────────
+plan.md
+plan-backend.md
+plan-mobile.md
+progress.md
+.github/
+
+# ─── Android / Kotlin Mobile ─────────────────────────────────────────────────
+*.iml
+.gradle/
+local.properties
+.idea/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+keystore.jks
+*.keystore
+*.jks
+google-services.json
+# Kotlin
+*.kotlin_module
+# DataStore / Room generated
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# ─── Spring Boot / Maven / Java ──────────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.jar
+*.war
+*.ear
+*.class
+*.log
+*.orig
+*.rej
+*.bak
+hs_err_pid*
+replay_pid*
+# Application secrets / config overrides
+**/application-local.yml
+**/application-local.properties
+**/application-secret*.yml
+**/application-secret*.properties
+.env
+.env.*
+# Maven wrapper binary
+.mvn/wrapper/maven-wrapper.jar
+
+# ─── IntelliJ IDEA / Android Studio ─────────────────────────────────────────
+*.iws
+*.ipr
+.idea/
+out/
+# Shelf / shelf changelists
+shelf/
+
+# ─── VS Code ─────────────────────────────────────────────────────────────────
+.vscode/
+*.code-workspace
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Docker / Infra ──────────────────────────────────────────────────────────
+docker-compose.override.yml
+*.pem
+*.key
+*.crt
+secrets/
+
+# ─── FFmpeg / Whisper worker outputs ─────────────────────────────────────────
+*.hls/
+*.m3u8
+*.ts
+transcoded/
+subtitles/
+
+# ─── Misc ────────────────────────────────────────────────────────────────────
+*.tmp
+*.swp
+*.swo
