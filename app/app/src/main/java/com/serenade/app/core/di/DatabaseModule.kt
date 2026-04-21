@@ -26,4 +26,32 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideUserDao(db: AppDatabase) = db.userDao()
+
+    @Provides
+    @Singleton
+    fun provideTrackDao(db: AppDatabase) = db.trackDao()
+
+    @Provides
+    @Singleton
+    fun providePlaylistDao(db: AppDatabase) = db.playlistDao()
+
+    @Provides
+    @Singleton
+    fun provideSubtitleDao(db: AppDatabase) = db.subtitleDao()
+
+    @Provides
+    @Singleton
+    fun provideDownloadDao(db: AppDatabase) = db.downloadDao()
+
+    @Provides
+    @Singleton
+    fun providePendingOpDao(db: AppDatabase) = db.pendingOpDao()
+
+    @Provides
+    @Singleton
+    fun provideProviderDao(db: AppDatabase) = db.providerDao()
+
+    @Provides
+    @Singleton
+    fun provideRatingDao(db: AppDatabase) = db.ratingDao()
 }
