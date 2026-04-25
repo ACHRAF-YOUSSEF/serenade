@@ -9,6 +9,7 @@ public class RabbitConfig {
 
     public static final String EXCHANGE = "serenade.tracks";
     public static final String QUEUE_TRANSCODER = "serenade.transcoder";
+    public static final String QUEUE_SUBTITLER = "serenade.subtitler";
     public static final String KEY_UPLOADED = "track.uploaded";
 
     @Bean
@@ -24,5 +25,15 @@ public class RabbitConfig {
     @Bean
     public Binding transcoderBinding(Queue transcoderQueue, TopicExchange trackExchange) {
         return BindingBuilder.bind(transcoderQueue).to(trackExchange).with(KEY_UPLOADED);
+    }
+
+    @Bean
+    public Queue subtitlerQueue() {
+        return QueueBuilder.durable(QUEUE_SUBTITLER).build();
+    }
+
+    @Bean
+    public Binding subtitlerBinding(Queue subtitlerQueue, TopicExchange trackExchange) {
+        return BindingBuilder.bind(subtitlerQueue).to(trackExchange).with(KEY_UPLOADED);
     }
 }

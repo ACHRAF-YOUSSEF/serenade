@@ -1,5 +1,6 @@
 package com.serenade.app.feature.player.presentation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -21,6 +22,7 @@ fun PlayerScreen(
     viewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val currentCue by viewModel.currentCue.collectAsState()
 
     Scaffold(
         topBar = {
@@ -97,7 +99,22 @@ fun PlayerScreen(
                 Text(formatMs(state.durationMs), style = MaterialTheme.typography.labelSmall)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            AnimatedVisibility(visible = currentCue != null) {
+                Text(
+                    text = currentCue ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Controls
             Row(

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     backend_url: str
     # Worker API key — env var only, never logged
     internal_api_key: str
+    whisper_model: str = "base"
 
     class Config:
         env_file = ".env"
