@@ -15,6 +15,8 @@ import com.serenade.app.feature.auth.presentation.RegisterScreen
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.feature.player.presentation.MiniPlayerBar
 import com.serenade.app.feature.player.presentation.PlayerScreen
+import com.serenade.app.feature.playlist.presentation.LibraryScreen
+import com.serenade.app.feature.playlist.presentation.PlaylistDetailScreen
 import com.serenade.app.feature.search.presentation.SearchScreen
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
@@ -43,6 +45,9 @@ private const val ROUTE_REGISTER = "register"
 private const val ROUTE_HOME = "home"
 private const val ROUTE_PLAYER = "player"
 private const val ROUTE_SEARCH = "search"
+private const val ROUTE_LIBRARY = "library"
+private const val ROUTE_PLAYLIST_DETAIL = "playlist"
+private const val ARG_PLAYLIST_ID = "playlistId"
 
 @Composable
 fun AppNavigation(
@@ -107,12 +112,34 @@ fun AppNavigation(
                         }
                     },
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
+                    onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
                     modifier = Modifier.fillMaxSize(),
                     viewModel = hiltViewModel(),
                 )
             }
             composable(ROUTE_SEARCH) {
                 SearchScreen(
+                    onTrackClick = { r ->
+                        val entity = r.toEntity()
+                        nowPlayingTrack = entity
+                        entity.streamUrl?.let { url -> playerController.play(entity.id, url) }
+                        navController.navigate(ROUTE_PLAYER)
+                    },
+                    onBack = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
+                )
+            }
+            composable(ROUTE_LIBRARY) {
+                LibraryScreen(
+                    onPlaylistClick = { playlistId ->
+                        navController.navigate("$ROUTE_PLAYLIST_DETAIL/$playlistId")
+                    },
+                    onBack = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
+                )
+            }
+            composable("$ROUTE_PLAYLIST_DETAIL/{$ARG_PLAYLIST_ID}") {
+                PlaylistDetailScreen(
                     onTrackClick = { r ->
                         val entity = r.toEntity()
                         nowPlayingTrack = entity

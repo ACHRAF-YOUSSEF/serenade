@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -22,6 +23,7 @@ import com.serenade.app.feature.track.data.entity.TrackEntity
 fun TrackListScreen(
     onTrackClick: (TrackEntity) -> Unit,
     onSearchClick: () -> Unit,
+    onLibraryClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TrackListViewModel,
 ) {
@@ -33,6 +35,9 @@ fun TrackListScreen(
             TopAppBar(
                 title = { Text("Serenade") },
                 actions = {
+                    IconButton(onClick = onLibraryClick) {
+                        Icon(Icons.Default.LibraryMusic, contentDescription = "Library")
+                    }
                     IconButton(onClick = onSearchClick) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
