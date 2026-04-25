@@ -24,6 +24,11 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 60MB
+  web:
+    error:
+      include-binding-errors: never
+      include-message: never
+      include-stacktrace: never
 
 management:
   endpoints:
@@ -34,12 +39,6 @@ management:
     health:
       probes:
         enabled: true
-
-server:
-  error:
-    include-message: never
-    include-binding-errors: never
-    include-stacktrace: never
 
 app:
   minio:
