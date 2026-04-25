@@ -56,8 +56,14 @@ class DownloadWorker @AssistedInject constructor(
                             output.write(buffer, 0, read)
                             writtenBytes += read
                             if (totalBytes > 0) {
-                                val progress = ((writtenBytes * 100) / totalBytes).toInt().coerceIn(0, 99)
-                                downloadDao.updateForTrack(trackId, DownloadState.DOWNLOADING, progress, target.absolutePath)
+                                val progress =
+                                    ((writtenBytes * 100) / totalBytes).toInt().coerceIn(0, 99)
+                                downloadDao.updateForTrack(
+                                    trackId,
+                                    DownloadState.DOWNLOADING,
+                                    progress,
+                                    target.absolutePath
+                                )
                             }
                         }
                     }
@@ -65,12 +71,16 @@ class DownloadWorker @AssistedInject constructor(
             }
 
             downloadDao.updateForTrack(trackId, DownloadState.DONE, 100, target.absolutePath)
-            trackDao.updateDownloadState(trackId, localPath = target.absolutePath, isDownloaded = true)
+            trackDao.updateDownloadState(
+                trackId,
+                localPath = target.absolutePath,
+                isDownloaded = true
+            )
             notifyComplete(title)
             Result.success()
         }.getOrElse {
             downloadDao.updateForTrack(trackId, DownloadState.FAILED, 0, null)
-            targetFile(trackId).delete()
+            targetFile(trackId).delete().also { if (!it) error("Failed to delete file") }
             Result.failure()
         }
     }
@@ -81,17 +91,18 @@ class DownloadWorker @AssistedInject constructor(
 
     private fun notifyComplete(title: String) {
         val manager = applicationContext.getSystemService(NotificationManager::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            manager.createNotificationChannel(
-                NotificationChannel(
-                    CHANNEL_ID,
-                    "Downloads",
-                    NotificationManager.IMPORTANCE_DEFAULT,
-                )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_ID,
+                "Downloads",
+                NotificationManager.IMPORTANCE_DEFAULT,
             )
-        }
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
         }

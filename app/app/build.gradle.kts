@@ -108,6 +108,7 @@ dependencies {
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
     implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.androidx.media3.datasource.okhttp)
 
     // ── Media3
     implementation(libs.androidx.media3.exoplayer)

@@ -40,4 +40,7 @@ interface TrackDao {
 
     @Query("DELETE FROM tracks WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    @Query("SELECT * FROM tracks WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<String>): List<TrackEntity>
 }

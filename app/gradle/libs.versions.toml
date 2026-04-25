@@ -11,6 +11,7 @@ composeBom = "2026.04.01"
 
 # room + ksp + serialization
 ksp = "2.3.6"
+media3DatasourceOkhttp = "1.10.0"
 room = "2.8.4"
 kotlinxSerializationJson = "1.11.0"
 
@@ -58,6 +59,7 @@ mockk = "1.14.9"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3DatasourceOkhttp" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

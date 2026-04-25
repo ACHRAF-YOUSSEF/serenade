@@ -1,5 +1,7 @@
 package com.serenade.app.feature.player
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -7,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.media3.common.MimeTypes
+import com.serenade.app.BuildConfig
 
 data class PlaybackState(
     val isPlaying: Boolean = false,
@@ -39,10 +43,19 @@ class PlayerController @Inject constructor(
     }
 
     fun play(trackId: String, streamUrl: String) {
+        val baseUrl = BuildConfig.API_BASE_URL
+        
+        val fullUrl = if (streamUrl.startsWith("http")) streamUrl else baseUrl + streamUrl
+
         val item = MediaItem.Builder()
             .setMediaId(trackId)
-            .setUri(streamUrl)
+            .setUri(fullUrl)
+            .setMimeType(MimeTypes.APPLICATION_M3U8)
             .build()
+
+        Log.i(TAG, "play: Playing trackId=$trackId, streamUrl=$streamUrl")
+        Log.i(TAG, "play: item=$item")
+
         player.setMediaItem(item)
         player.prepare()
         player.play()

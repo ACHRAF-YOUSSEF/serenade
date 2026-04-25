@@ -17,8 +17,14 @@ class TrackSyncRepository @Inject constructor(
 
     suspend fun sync() {
         val page = api.getTracks()
+
+        val remoteIds = page.content.map { it.id }
+
+        val existingTracks = dao.getByIds(remoteIds).associateBy { it.id }
+
         val entities = page.content.map { r ->
-            val existing = dao.getByIdOnce(r.id)
+            val existing = existingTracks[r.id]
+
             TrackEntity(
                 id = r.id,
                 remoteId = r.id,
@@ -29,9 +35,9 @@ class TrackSyncRepository @Inject constructor(
                 durationMs = r.durationMs ?: 0L,
                 artworkUrl = r.artworkUrl,
                 localPath = existing?.localPath,
+                isDownloaded = existing?.isDownloaded ?: false,
                 streamUrl = r.streamUrl,
                 streamUrlExpiresAt = null,
-                isDownloaded = existing?.isDownloaded ?: false,
                 providerId = "serenade",
                 updatedAt = Instant.now(),
             )
