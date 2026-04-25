@@ -61,6 +61,14 @@ class PlayerController @Inject constructor(
         _state.value = PlaybackState()
     }
 
+    fun syncPosition() {
+        if (_state.value.currentTrackId == null) return
+        _state.value = _state.value.copy(
+            positionMs = player.currentPosition,
+            durationMs = player.duration.coerceAtLeast(0L),
+        )
+    }
+
     fun release() {
         player.release()
     }

@@ -46,6 +46,8 @@ management:
         enabled: true
 
 app:
+  # DEV ONLY default — must be set in prod
+  internal-api-key: ${INTERNAL_API_KEY:dev-internal-key-change-in-prod}
   jwt:
     secret: ${JWT_SECRET:dev-only-change-me-in-prod-min32chars!!}
     access-token-expiry-ms: 900000

@@ -1,14 +1,9 @@
 package com.serenade.app.core.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,12 +12,14 @@ import com.serenade.app.feature.auth.presentation.LoginScreen
 import com.serenade.app.feature.auth.presentation.RegisterScreen
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.feature.player.presentation.MiniPlayerBar
+import com.serenade.app.feature.player.presentation.PlayerScreen
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.presentation.TrackListScreen
 
 private const val ROUTE_LOGIN = "login"
 private const val ROUTE_REGISTER = "register"
 private const val ROUTE_HOME = "home"
+private const val ROUTE_PLAYER = "player"
 
 @Composable
 fun AppNavigation(
@@ -42,7 +39,11 @@ fun AppNavigation(
                 trackTitle = nowPlayingTrack?.title,
                 trackArtist = nowPlayingTrack?.artist,
                 onTogglePlayPause = playerController::togglePlayPause,
-                onBarClick = {},
+                onBarClick = {
+                    if (playbackState.currentTrackId != null) {
+                        navController.navigate(ROUTE_PLAYER)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -81,6 +82,13 @@ fun AppNavigation(
                         }
                     },
                     modifier = Modifier.fillMaxSize(),
+                )
+            }
+            composable(ROUTE_PLAYER) {
+                PlayerScreen(
+                    trackTitle = nowPlayingTrack?.title ?: "",
+                    trackArtist = nowPlayingTrack?.artist ?: "",
+                    onDismiss = { navController.popBackStack() },
                 )
             }
         }
