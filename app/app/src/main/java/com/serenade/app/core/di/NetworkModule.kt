@@ -3,6 +3,7 @@ package com.serenade.app.core.di
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.serenade.app.BuildConfig
 import com.serenade.app.feature.auth.data.SecureTokenStore
+import com.serenade.app.feature.auth.data.TokenRefreshAuthenticator
 import com.serenade.app.feature.auth.data.remote.AuthApiService
 import com.serenade.app.feature.playlist.data.remote.PlaylistApiService
 import com.serenade.app.feature.rating.data.remote.RatingApiService
@@ -34,8 +35,9 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(tokenStore: SecureTokenStore): OkHttpClient {
+    fun provideOkHttpClient(tokenStore: SecureTokenStore, authenticator: TokenRefreshAuthenticator): OkHttpClient {
         return OkHttpClient.Builder()
+            .authenticator(authenticator)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
             .writeTimeout(300, TimeUnit.SECONDS)
