@@ -109,3 +109,4 @@ subtitles/
 .code-review-graph/
 .gradle-user-home/
 .codex
+.m2/

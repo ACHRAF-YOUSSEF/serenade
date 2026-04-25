@@ -46,6 +46,10 @@ management:
         enabled: true
 
 app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-me-in-prod-min32chars!!}
+    access-token-expiry-ms: 900000
+    refresh-token-expiry-ms: 604800000
   minio:
     endpoint: ${MINIO_ENDPOINT:}
     access-key: ${MINIO_ACCESS_KEY:}
