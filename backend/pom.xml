@@ -29,9 +29,23 @@
 	<properties>
 		<java.version>25</java.version>
 		<jjwt.version>0.12.6</jjwt.version>
-		<minio.version>8.5.12</minio.version>
+		<spring-framework.version>7.0.7</spring-framework.version>
+		<spring-security.version>7.0.5</spring-security.version>
+		<tomcat.version>11.0.21</tomcat.version>
+		<jackson-bom.version>3.1.1</jackson-bom.version>
+		<bouncycastle.version>1.84</bouncycastle.version>
+		<minio.version>8.6.0</minio.version>
 		<bucket4j.version>8.10.1</bucket4j.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk18on</artifactId>
+				<version>${bouncycastle.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
