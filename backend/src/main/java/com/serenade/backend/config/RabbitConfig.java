@@ -1,6 +1,10 @@
 package com.serenade.backend.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,6 +15,18 @@ public class RabbitConfig {
     public static final String QUEUE_TRANSCODER = "serenade.transcoder";
     public static final String QUEUE_SUBTITLER = "serenade.subtitler";
     public static final String KEY_UPLOADED = "track.uploaded";
+
+    @Bean
+    public MessageConverter jsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jsonMessageConverter());
+        return template;
+    }
 
     @Bean
     public TopicExchange trackExchange() {
