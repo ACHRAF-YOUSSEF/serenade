@@ -101,3 +101,7 @@ subtitles/
 *.tmp
 *.swp
 *.swo
+
+.claude/
+*.md
+!readme.md
