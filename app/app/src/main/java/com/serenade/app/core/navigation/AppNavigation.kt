@@ -23,6 +23,7 @@ import com.serenade.app.feature.search.presentation.SearchScreen
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
+import com.serenade.app.feature.upload.presentation.UploadScreen
 import java.io.File
 import java.time.Instant
 
@@ -54,6 +55,7 @@ private const val ROUTE_PLAYER = "player"
 private const val ROUTE_SEARCH = "search"
 private const val ROUTE_LIBRARY = "library"
 private const val ROUTE_DOWNLOADS = "downloads"
+private const val ROUTE_UPLOAD = "upload"
 private const val ROUTE_PLAYLIST_DETAIL = "playlist"
 private const val ARG_PLAYLIST_ID = "playlistId"
 
@@ -122,6 +124,7 @@ fun AppNavigation(
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
                     onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
+                    onUploadClick = { navController.navigate(ROUTE_UPLOAD) },
                     modifier = Modifier.fillMaxSize(),
                     viewModel = hiltViewModel(),
                 )
@@ -154,6 +157,12 @@ fun AppNavigation(
                         track.playbackUri()?.let { url -> playerController.play(track.id, url) }
                         navController.navigate(ROUTE_PLAYER)
                     },
+                    onBack = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
+                )
+            }
+            composable(ROUTE_UPLOAD) {
+                UploadScreen(
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
                 )

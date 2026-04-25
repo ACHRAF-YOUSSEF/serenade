@@ -10,6 +10,7 @@ import com.serenade.app.feature.search.presentation.SearchApiService
 import com.serenade.app.feature.subtitle.data.remote.SubtitleApiService
 import com.serenade.app.feature.sync.data.remote.ChangesApiService
 import com.serenade.app.feature.track.data.remote.TrackApiService
+import com.serenade.app.feature.upload.data.remote.UploadApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -98,4 +99,9 @@ object NetworkModule {
     @Singleton
     fun provideChangesApiService(retrofit: Retrofit): ChangesApiService =
         retrofit.create(ChangesApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUploadApiService(retrofit: Retrofit): UploadApiService =
+        retrofit.create(UploadApiService::class.java)
 }

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.DownloadForOffline
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
@@ -31,6 +32,7 @@ fun TrackListScreen(
     onSearchClick: () -> Unit,
     onLibraryClick: () -> Unit,
     onDownloadsClick: () -> Unit,
+    onUploadClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TrackListViewModel,
 ) {
@@ -48,6 +50,9 @@ fun TrackListScreen(
                     }
                     IconButton(onClick = onDownloadsClick) {
                         Icon(Icons.Default.DownloadForOffline, contentDescription = "Downloads")
+                    }
+                    IconButton(onClick = onUploadClick) {
+                        Icon(Icons.Default.CloudUpload, contentDescription = "Upload")
                     }
                     IconButton(onClick = onSearchClick) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
