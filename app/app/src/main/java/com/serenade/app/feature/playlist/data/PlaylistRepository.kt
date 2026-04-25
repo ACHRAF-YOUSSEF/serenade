@@ -8,11 +8,14 @@ import com.serenade.app.feature.playlist.data.remote.dto.CreatePlaylistRequest
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistDetailResponse
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistSummaryResponse
 import com.serenade.app.feature.sync.data.PendingOpDao
+import com.serenade.app.feature.sync.data.entity.AddPlaylistTrackOpPayload
 import com.serenade.app.feature.sync.data.entity.CopyPlaylistOpPayload
 import com.serenade.app.feature.sync.data.entity.CreatePlaylistOpPayload
 import com.serenade.app.feature.sync.data.entity.PendingOpEntity
 import com.serenade.app.feature.sync.data.entity.PendingOpJson
 import com.serenade.app.feature.sync.data.entity.PendingOpType
+import com.serenade.app.feature.sync.data.entity.RemovePlaylistTrackOpPayload
+import com.serenade.app.feature.playlist.data.remote.dto.TrackPositionRequest
 import com.serenade.app.feature.track.data.TrackDao
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
@@ -80,6 +83,46 @@ class PlaylistRepository @Inject constructor(
                 pendingOpDao.deleteById(opId)
             }
             .getOrElse { local.toSummary(trackCount = 0) }
+    }
+
+    suspend fun addTrack(playlistId: String, trackId: String) {
+        val current = playlistDao.getTracksForPlaylistOnce(playlistId)
+        if (current.any { it.id == trackId }) return
+        playlistDao.insertCrossRef(PlaylistTrackCrossRef(playlistId, trackId, current.size))
+
+        val opId = UUID.randomUUID().toString()
+        pendingOpDao.insert(
+            PendingOpEntity(
+                id = opId,
+                type = PendingOpType.ADD_PLAYLIST_TRACK,
+                payloadJson = PendingOpJson.encodeToString(AddPlaylistTrackOpPayload(playlistId, trackId)),
+                createdAt = Instant.now(),
+            )
+        )
+        runCatching {
+            val updated = playlistDao.getTracksForPlaylistOnce(playlistId)
+            api.setTracks(playlistId, updated.mapIndexed { i, t -> TrackPositionRequest(t.id, i) })
+            pendingOpDao.deleteById(opId)
+        }
+    }
+
+    suspend fun removeTrack(playlistId: String, trackId: String) {
+        playlistDao.deleteCrossRef(PlaylistTrackCrossRef(playlistId, trackId, 0))
+
+        val opId = UUID.randomUUID().toString()
+        pendingOpDao.insert(
+            PendingOpEntity(
+                id = opId,
+                type = PendingOpType.REMOVE_PLAYLIST_TRACK,
+                payloadJson = PendingOpJson.encodeToString(RemovePlaylistTrackOpPayload(playlistId, trackId)),
+                createdAt = Instant.now(),
+            )
+        )
+        runCatching {
+            val remaining = playlistDao.getTracksForPlaylistOnce(playlistId)
+            api.setTracks(playlistId, remaining.mapIndexed { i, t -> TrackPositionRequest(t.id, i) })
+            pendingOpDao.deleteById(opId)
+        }
     }
 
     suspend fun copyPlaylist(sourcePlaylistId: String): PlaylistSummaryResponse? {

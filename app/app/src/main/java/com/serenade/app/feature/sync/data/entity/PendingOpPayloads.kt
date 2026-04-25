@@ -24,3 +24,15 @@ data class RateOpPayload(
     val targetId: String,
     val value: Int,
 )
+
+@Serializable
+data class AddPlaylistTrackOpPayload(
+    val playlistId: String,
+    val trackId: String,
+)
+
+@Serializable
+data class RemovePlaylistTrackOpPayload(
+    val playlistId: String,
+    val trackId: String,
+)

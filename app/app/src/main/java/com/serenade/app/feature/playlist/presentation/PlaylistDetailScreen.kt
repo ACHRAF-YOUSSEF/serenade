@@ -6,7 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +29,8 @@ fun PlaylistDetailScreen(
     viewModel: PlaylistDetailViewModel,
 ) {
     val state by viewModel.state.collectAsState()
+    val allTracks by viewModel.allTracks.collectAsState()
+    var showAddSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -46,6 +51,13 @@ fun PlaylistDetailScreen(
                 },
             )
         },
+        floatingActionButton = {
+            if (state is PlaylistDetailUiState.Ready) {
+                FloatingActionButton(onClick = { showAddSheet = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add tracks")
+                }
+            }
+        },
     ) { padding ->
         when (val s = state) {
             is PlaylistDetailUiState.Loading -> Box(
@@ -63,6 +75,10 @@ fun PlaylistDetailScreen(
             }
 
             is PlaylistDetailUiState.Ready -> {
+                val currentTrackIds = remember(s.detail.tracks) {
+                    s.detail.tracks.map { it.id }.toHashSet()
+                }
+
                 Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                     PlaylistSummaryHeader(
                         trackCount = s.detail.tracks.size,
@@ -81,8 +97,52 @@ fun PlaylistDetailScreen(
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(s.detail.tracks, key = { it.id }) { track ->
-                                PlaylistTrackRow(track = track, onClick = { onTrackClick(track) })
+                                PlaylistTrackRow(
+                                    track = track,
+                                    onClick = { onTrackClick(track) },
+                                    onRemove = { viewModel.removeTrack(track.id) },
+                                )
                                 HorizontalDivider()
+                            }
+                        }
+                    }
+                }
+
+                if (showAddSheet) {
+                    val availableTracks = remember(allTracks, currentTrackIds) {
+                        allTracks.filter { it.id !in currentTrackIds }
+                    }
+                    ModalBottomSheet(onDismissRequest = { showAddSheet = false }) {
+                        Text(
+                            "Add tracks",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                        if (availableTracks.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("No more tracks available")
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .navigationBarsPadding(),
+                            ) {
+                                items(availableTracks, key = { it.id }) { track ->
+                                    AddTrackRow(
+                                        track = track,
+                                        onClick = {
+                                            viewModel.addTrack(track.id)
+                                            showAddSheet = false
+                                        },
+                                    )
+                                    HorizontalDivider()
+                                }
                             }
                         }
                     }
@@ -128,7 +188,28 @@ private fun PlaylistSummaryHeader(
 }
 
 @Composable
-private fun PlaylistTrackRow(track: TrackResponse, onClick: () -> Unit) {
+private fun PlaylistTrackRow(track: TrackResponse, onClick: () -> Unit, onRemove: () -> Unit) {
+    ListItem(
+        headlineContent = {
+            Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        supportingContent = {
+            Text(track.artist, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        leadingContent = {
+            Icon(Icons.Default.MusicNote, contentDescription = null)
+        },
+        trailingContent = {
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Default.Delete, contentDescription = "Remove track")
+            }
+        },
+        modifier = Modifier.clickable(onClick = onClick),
+    )
+}
+
+@Composable
+private fun AddTrackRow(track: TrackEntity, onClick: () -> Unit) {
     ListItem(
         headlineContent = {
             Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.serenade.app.feature.playlist.data.PlaylistRepository
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistDetailResponse
 import com.serenade.app.feature.rating.data.RatingRepository
+import com.serenade.app.feature.track.data.TrackDao
+import com.serenade.app.feature.track.data.entity.TrackEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -21,6 +23,7 @@ sealed interface PlaylistDetailUiState {
 class PlaylistDetailViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val ratingRepository: RatingRepository,
+    private val trackDao: TrackDao,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -28,6 +31,9 @@ class PlaylistDetailViewModel @Inject constructor(
 
     private val _state = MutableStateFlow<PlaylistDetailUiState>(PlaylistDetailUiState.Loading)
     val state: StateFlow<PlaylistDetailUiState> = _state
+
+    val allTracks: StateFlow<List<TrackEntity>> = trackDao.getAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init { load() }
 
@@ -59,6 +65,20 @@ class PlaylistDetailViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { playlistRepository.copyPlaylist(playlistId) }
                 .onSuccess { onCopied() }
+        }
+    }
+
+    fun addTrack(trackId: String) {
+        viewModelScope.launch {
+            runCatching { playlistRepository.addTrack(playlistId, trackId) }
+            load()
+        }
+    }
+
+    fun removeTrack(trackId: String) {
+        viewModelScope.launch {
+            runCatching { playlistRepository.removeTrack(playlistId, trackId) }
+            load()
         }
     }
 }

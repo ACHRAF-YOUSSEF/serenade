@@ -17,14 +17,17 @@ import com.serenade.app.feature.rating.data.RatingDao
 import com.serenade.app.feature.rating.data.entity.RatingEntity
 import com.serenade.app.feature.rating.data.entity.RatingTargetType
 import com.serenade.app.feature.rating.data.remote.RatingApiService
+import com.serenade.app.feature.playlist.data.remote.dto.TrackPositionRequest
 import com.serenade.app.feature.rating.data.remote.dto.RatingRequest
 import com.serenade.app.feature.rating.data.remote.dto.RatingResponse
+import com.serenade.app.feature.sync.data.entity.AddPlaylistTrackOpPayload
 import com.serenade.app.feature.sync.data.entity.CopyPlaylistOpPayload
 import com.serenade.app.feature.sync.data.entity.CreatePlaylistOpPayload
 import com.serenade.app.feature.sync.data.entity.PendingOpEntity
 import com.serenade.app.feature.sync.data.entity.PendingOpJson
 import com.serenade.app.feature.sync.data.entity.PendingOpType
 import com.serenade.app.feature.sync.data.entity.RateOpPayload
+import com.serenade.app.feature.sync.data.entity.RemovePlaylistTrackOpPayload
 import com.serenade.app.feature.sync.data.remote.ChangesApiService
 import com.serenade.app.feature.sync.worker.SyncWorker
 import com.serenade.app.feature.track.data.TrackDao
@@ -157,6 +160,22 @@ class SyncRepository @Inject constructor(
                 ratingDao.insert(
                     ratingApi.rate(RatingRequest("TRACK", payload.targetId, payload.value))
                         .toEntity(RatingTargetType.TRACK)
+                )
+            }
+            PendingOpType.ADD_PLAYLIST_TRACK -> {
+                val payload = PendingOpJson.decodeFromString<AddPlaylistTrackOpPayload>(op.payloadJson)
+                val tracks = playlistDao.getTracksForPlaylistOnce(payload.playlistId)
+                playlistApi.setTracks(
+                    payload.playlistId,
+                    tracks.mapIndexed { i, t -> TrackPositionRequest(t.id, i) },
+                )
+            }
+            PendingOpType.REMOVE_PLAYLIST_TRACK -> {
+                val payload = PendingOpJson.decodeFromString<RemovePlaylistTrackOpPayload>(op.payloadJson)
+                val tracks = playlistDao.getTracksForPlaylistOnce(payload.playlistId)
+                playlistApi.setTracks(
+                    payload.playlistId,
+                    tracks.mapIndexed { i, t -> TrackPositionRequest(t.id, i) },
                 )
             }
             PendingOpType.UNKNOWN -> Unit
