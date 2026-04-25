@@ -12,4 +12,5 @@ data class TrackResponse(
     val durationMs: Long? = null,
     val artworkUrl: String? = null,
     val streamUrl: String? = null,
+    val updatedAt: String? = null,
 )

@@ -8,6 +8,7 @@ import com.serenade.app.feature.playlist.data.remote.PlaylistApiService
 import com.serenade.app.feature.rating.data.remote.RatingApiService
 import com.serenade.app.feature.search.presentation.SearchApiService
 import com.serenade.app.feature.subtitle.data.remote.SubtitleApiService
+import com.serenade.app.feature.sync.data.remote.ChangesApiService
 import com.serenade.app.feature.track.data.remote.TrackApiService
 import dagger.Module
 import dagger.Provides
@@ -91,4 +92,9 @@ object NetworkModule {
     @Singleton
     fun provideRatingApiService(retrofit: Retrofit): RatingApiService =
         retrofit.create(RatingApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideChangesApiService(retrofit: Retrofit): ChangesApiService =
+        retrofit.create(ChangesApiService::class.java)
 }

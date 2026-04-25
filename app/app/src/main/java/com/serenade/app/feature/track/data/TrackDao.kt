@@ -17,6 +17,9 @@ interface TrackDao {
     @Query("SELECT * FROM tracks WHERE id = :id")
     fun getById(id: String): Flow<TrackEntity?>
 
+    @Query("SELECT * FROM tracks WHERE id = :id")
+    suspend fun getByIdOnce(id: String): TrackEntity?
+
     @Query("SELECT * FROM tracks WHERE genre = :genre ORDER BY title ASC")
     fun getByGenre(genre: Genre): Flow<List<TrackEntity>>
 
@@ -31,6 +34,9 @@ interface TrackDao {
 
     @Update
     suspend fun update(track: TrackEntity)
+
+    @Query("UPDATE tracks SET localPath = :localPath, isDownloaded = :isDownloaded WHERE id = :id")
+    suspend fun updateDownloadState(id: String, localPath: String?, isDownloaded: Boolean)
 
     @Query("DELETE FROM tracks WHERE id = :id")
     suspend fun deleteById(id: String)

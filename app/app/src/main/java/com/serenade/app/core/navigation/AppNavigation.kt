@@ -1,5 +1,6 @@
 package com.serenade.app.core.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -12,6 +13,7 @@ import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.auth.presentation.LoginScreen
 import com.serenade.app.feature.auth.presentation.RegisterScreen
+import com.serenade.app.feature.download.presentation.DownloadScreen
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.feature.player.presentation.MiniPlayerBar
 import com.serenade.app.feature.player.presentation.PlayerScreen
@@ -21,6 +23,7 @@ import com.serenade.app.feature.search.presentation.SearchScreen
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
+import java.io.File
 import java.time.Instant
 
 private fun TrackResponse.toEntity() = TrackEntity(
@@ -40,12 +43,17 @@ private fun TrackResponse.toEntity() = TrackEntity(
     updatedAt = Instant.now(),
 )
 
+private fun TrackEntity.playbackUri(): String? {
+    return localPath?.let { Uri.fromFile(File(it)).toString() } ?: streamUrl
+}
+
 private const val ROUTE_LOGIN = "login"
 private const val ROUTE_REGISTER = "register"
 private const val ROUTE_HOME = "home"
 private const val ROUTE_PLAYER = "player"
 private const val ROUTE_SEARCH = "search"
 private const val ROUTE_LIBRARY = "library"
+private const val ROUTE_DOWNLOADS = "downloads"
 private const val ROUTE_PLAYLIST_DETAIL = "playlist"
 private const val ARG_PLAYLIST_ID = "playlistId"
 
@@ -107,12 +115,13 @@ fun AppNavigation(
                 TrackListScreen(
                     onTrackClick = { track ->
                         nowPlayingTrack = track
-                        track.streamUrl?.let { url ->
+                        track.playbackUri()?.let { url ->
                             playerController.play(track.id, url)
                         }
                     },
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
+                    onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
                     modifier = Modifier.fillMaxSize(),
                     viewModel = hiltViewModel(),
                 )
@@ -133,6 +142,17 @@ fun AppNavigation(
                 LibraryScreen(
                     onPlaylistClick = { playlistId ->
                         navController.navigate("$ROUTE_PLAYLIST_DETAIL/$playlistId")
+                    },
+                    onBack = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
+                )
+            }
+            composable(ROUTE_DOWNLOADS) {
+                DownloadScreen(
+                    onTrackClick = { track ->
+                        nowPlayingTrack = track
+                        track.playbackUri()?.let { url -> playerController.play(track.id, url) }
+                        navController.navigate(ROUTE_PLAYER)
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),

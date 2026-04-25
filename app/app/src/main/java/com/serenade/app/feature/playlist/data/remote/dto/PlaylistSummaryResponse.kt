@@ -11,4 +11,5 @@ data class PlaylistSummaryResponse(
     val version: Int,
     val trackCount: Int,
     val ratingAvg: Double,
+    val updatedAt: String? = null,
 )

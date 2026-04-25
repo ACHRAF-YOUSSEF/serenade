@@ -9,4 +9,5 @@ data class RatingResponse(
     val targetId: String,
     val value: Int,
     val avg: Double,
+    val updatedAt: String? = null,
 )
