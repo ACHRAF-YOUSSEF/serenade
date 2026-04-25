@@ -2,6 +2,7 @@ package com.serenade.app.feature.sync.data.entity
 
 enum class PendingOpType {
     CREATE_PLAYLIST,
+    COPY_PLAYLIST,
     UPDATE_PLAYLIST,
     DELETE_PLAYLIST,
     ADD_PLAYLIST_TRACK,

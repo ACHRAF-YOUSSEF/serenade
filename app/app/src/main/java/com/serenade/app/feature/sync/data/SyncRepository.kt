@@ -10,9 +10,21 @@ import androidx.work.WorkManager
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.playlist.data.PlaylistDao
 import com.serenade.app.feature.playlist.data.entity.PlaylistEntity
+import com.serenade.app.feature.playlist.data.remote.PlaylistApiService
+import com.serenade.app.feature.playlist.data.remote.dto.CreatePlaylistRequest
+import com.serenade.app.feature.playlist.data.remote.dto.PlaylistSummaryResponse
 import com.serenade.app.feature.rating.data.RatingDao
 import com.serenade.app.feature.rating.data.entity.RatingEntity
 import com.serenade.app.feature.rating.data.entity.RatingTargetType
+import com.serenade.app.feature.rating.data.remote.RatingApiService
+import com.serenade.app.feature.rating.data.remote.dto.RatingRequest
+import com.serenade.app.feature.rating.data.remote.dto.RatingResponse
+import com.serenade.app.feature.sync.data.entity.CopyPlaylistOpPayload
+import com.serenade.app.feature.sync.data.entity.CreatePlaylistOpPayload
+import com.serenade.app.feature.sync.data.entity.PendingOpEntity
+import com.serenade.app.feature.sync.data.entity.PendingOpJson
+import com.serenade.app.feature.sync.data.entity.PendingOpType
+import com.serenade.app.feature.sync.data.entity.RateOpPayload
 import com.serenade.app.feature.sync.data.remote.ChangesApiService
 import com.serenade.app.feature.sync.worker.SyncWorker
 import com.serenade.app.feature.track.data.TrackDao
@@ -27,6 +39,8 @@ import javax.inject.Singleton
 class SyncRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val api: ChangesApiService,
+    private val playlistApi: PlaylistApiService,
+    private val ratingApi: RatingApiService,
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val ratingDao: RatingDao,
@@ -92,7 +106,7 @@ class SyncRepository @Inject constructor(
         }
 
         prefs.edit { putString(KEY_CURSOR, response.nextCursor) }
-        flushPendingOpsPlaceholder()
+        flushPendingOps()
     }
 
     fun schedulePeriodicSync() {
@@ -111,10 +125,66 @@ class SyncRepository @Inject constructor(
         )
     }
 
-    private suspend fun flushPendingOpsPlaceholder() {
-        pendingOpDao.getPendingList()
-        // Repositories do not yet write outbox mutations. Keep hook here for M9 flush work.
+    private suspend fun flushPendingOps() {
+        for (op in pendingOpDao.getPendingList()) {
+            val applied = runCatching { applyPendingOp(op) }.isSuccess
+            if (!applied) return
+            pendingOpDao.deleteById(op.id)
+        }
     }
+
+    private suspend fun applyPendingOp(op: PendingOpEntity) {
+        when (op.type) {
+            PendingOpType.CREATE_PLAYLIST -> {
+                val payload = PendingOpJson.decodeFromString<CreatePlaylistOpPayload>(op.payloadJson)
+                val playlist = playlistApi.createPlaylist(CreatePlaylistRequest(payload.name))
+                playlistDao.insert(playlist.toEntity())
+                playlistDao.deleteById(payload.localId)
+            }
+            PendingOpType.COPY_PLAYLIST -> {
+                val payload = PendingOpJson.decodeFromString<CopyPlaylistOpPayload>(op.payloadJson)
+                playlistDao.insert(playlistApi.copyPlaylist(payload.sourcePlaylistId).toEntity())
+            }
+            PendingOpType.RATE_PLAYLIST -> {
+                val payload = PendingOpJson.decodeFromString<RateOpPayload>(op.payloadJson)
+                ratingDao.insert(
+                    ratingApi.rate(RatingRequest("PLAYLIST", payload.targetId, payload.value))
+                        .toEntity(RatingTargetType.PLAYLIST)
+                )
+            }
+            PendingOpType.RATE_TRACK -> {
+                val payload = PendingOpJson.decodeFromString<RateOpPayload>(op.payloadJson)
+                ratingDao.insert(
+                    ratingApi.rate(RatingRequest("TRACK", payload.targetId, payload.value))
+                        .toEntity(RatingTargetType.TRACK)
+                )
+            }
+            PendingOpType.UNKNOWN -> Unit
+            else -> throw UnsupportedOperationException("Unsupported pending op: ${op.type}")
+        }
+    }
+
+    private fun PlaylistSummaryResponse.toEntity(): PlaylistEntity =
+        PlaylistEntity(
+            id = id,
+            remoteId = id,
+            name = name,
+            ownerId = LOCAL_OWNER,
+            isMine = true,
+            isCopy = isCopy,
+            sourcePlaylistId = sourcePlaylistId,
+            ratingAvg = ratingAvg.toFloat(),
+            updatedAt = updatedAt?.let(Instant::parse) ?: Instant.now(),
+        )
+
+    private fun RatingResponse.toEntity(targetType: RatingTargetType): RatingEntity =
+        RatingEntity(
+            id = id,
+            targetType = targetType,
+            targetId = targetId,
+            value = value,
+            syncedAt = updatedAt?.let(Instant::parse) ?: Instant.now(),
+        )
 
     private companion object {
         const val PREFS_NAME = "serenade_sync"

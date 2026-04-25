@@ -46,6 +46,7 @@ object NetworkModule {
             .apply {
                 if (BuildConfig.DEBUG) {
                     addInterceptor(HttpLoggingInterceptor().apply {
+                        redactHeader("Authorization")
                         level = HttpLoggingInterceptor.Level.BODY
                     })
                 }

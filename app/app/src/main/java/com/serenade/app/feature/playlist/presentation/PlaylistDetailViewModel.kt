@@ -3,10 +3,9 @@ package com.serenade.app.feature.playlist.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.serenade.app.feature.playlist.data.remote.PlaylistApiService
+import com.serenade.app.feature.playlist.data.PlaylistRepository
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistDetailResponse
-import com.serenade.app.feature.rating.data.remote.RatingApiService
-import com.serenade.app.feature.rating.data.remote.dto.RatingRequest
+import com.serenade.app.feature.rating.data.RatingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,8 +19,8 @@ sealed interface PlaylistDetailUiState {
 
 @HiltViewModel
 class PlaylistDetailViewModel @Inject constructor(
-    private val playlistApi: PlaylistApiService,
-    private val ratingApi: RatingApiService,
+    private val playlistRepository: PlaylistRepository,
+    private val ratingRepository: RatingRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -36,7 +35,7 @@ class PlaylistDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = PlaylistDetailUiState.Loading
             _state.value = try {
-                PlaylistDetailUiState.Ready(playlistApi.getPlaylist(playlistId), null)
+                PlaylistDetailUiState.Ready(playlistRepository.getDetail(playlistId), null)
             } catch (e: Exception) {
                 PlaylistDetailUiState.Error(e.message ?: "Failed to load playlist")
             }
@@ -46,7 +45,7 @@ class PlaylistDetailViewModel @Inject constructor(
     fun rate(value: Int) {
         viewModelScope.launch {
             runCatching {
-                ratingApi.rate(RatingRequest("PLAYLIST", playlistId, value))
+                ratingRepository.ratePlaylist(playlistId, value)
             }.onSuccess {
                 val current = _state.value
                 if (current is PlaylistDetailUiState.Ready) {
@@ -58,7 +57,7 @@ class PlaylistDetailViewModel @Inject constructor(
 
     fun copyPlaylist(onCopied: () -> Unit) {
         viewModelScope.launch {
-            runCatching { playlistApi.copyPlaylist(playlistId) }
+            runCatching { playlistRepository.copyPlaylist(playlistId) }
                 .onSuccess { onCopied() }
         }
     }
