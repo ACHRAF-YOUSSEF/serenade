@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface TrackRepository extends JpaRepository<Track, UUID> {
     Page<Track> findByStatus(TrackStatus status, Pageable pageable);
     Optional<Track> findByIdAndStatus(UUID id, TrackStatus status);
+    Optional<Track> findByIdAndUploader_Id(UUID id, UUID uploaderId);
     List<Track> findByStatusAndUpdatedAtAfterOrderByUpdatedAtAsc(TrackStatus status, Instant since, Pageable pageable);
 
     @Query(value = """

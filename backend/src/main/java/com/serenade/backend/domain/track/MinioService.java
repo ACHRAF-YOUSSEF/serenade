@@ -22,12 +22,15 @@ public class MinioService {
     public String uploadRaw(String objectKey, MultipartFile file) {
         try {
             String bucket = props.minio().bucket();
+            String contentType = file.getContentType() != null
+                    ? file.getContentType()
+                    : "application/octet-stream";
             ensureBucket(bucket);
             minio.putObject(PutObjectArgs.builder()
                     .bucket(bucket)
                     .object(objectKey)
                     .stream(file.getInputStream(), file.getSize(), -1L)
-                    .contentType(file.getContentType())
+                    .contentType(contentType)
                     .build());
             return objectKey;
         } catch (Exception e) {
@@ -38,7 +41,6 @@ public class MinioService {
     public String presignedGetUrl(String objectKey) {
         try {
             int expiryMinutes = props.minio().presignedUrlExpiryMinutes();
-            // Security non-negotiable: presigned URLs ≤ 15 min
             int clampedExpiry = Math.min(expiryMinutes, 15);
             return minio.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
