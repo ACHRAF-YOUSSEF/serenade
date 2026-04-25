@@ -110,3 +110,4 @@ subtitles/
 .gradle-user-home/
 .codex
 .m2/
+__pycache__/
