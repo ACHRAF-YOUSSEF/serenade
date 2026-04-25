@@ -43,10 +43,7 @@ public class RabbitConfig {
 
     @Bean
     public Queue transcoderQueue() {
-        return QueueBuilder.durable(QUEUE_TRANSCODER)
-                .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-                .withArgument("x-dead-letter-routing-key", QUEUE_TRANSCODER)
-                .build();
+        return QueueBuilder.durable(QUEUE_TRANSCODER).build();
     }
 
     @Bean
@@ -66,10 +63,7 @@ public class RabbitConfig {
 
     @Bean
     public Queue subtitlerQueue() {
-        return QueueBuilder.durable(QUEUE_SUBTITLER)
-                .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-                .withArgument("x-dead-letter-routing-key", QUEUE_SUBTITLER)
-                .build();
+        return QueueBuilder.durable(QUEUE_SUBTITLER).build();
     }
 
     @Bean

@@ -40,7 +40,7 @@ public class RateLimitFilter implements Filter {
 
         boolean isAuth = path.startsWith("/api/auth/");
         String key = resolveIp(request) + ":" + isAuth;
-        Bucket bucket = buckets.computeIfAbsent(key, k -> buildBucket(isAuth));
+        Bucket bucket = buckets.computeIfAbsent(key, _ -> buildBucket(isAuth));
 
         if (bucket.tryConsume(1)) {
             chain.doFilter(req, res);
