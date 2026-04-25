@@ -67,6 +67,8 @@ public class SecurityConfig {
                             boolean valid = internalApiKey != null && internalApiKey.equals(key);
                             return new org.springframework.security.authorization.AuthorizationDecision(valid);
                         })
+                        .requestMatchers("/hls/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
