@@ -26,7 +26,7 @@ public class ChangesController {
             @RequestParam(defaultValue = "1970-01-01T00:00:00Z") Instant since,
             @RequestParam(defaultValue = "100") int limit
     ) {
-        int boundedLimit = Math.max(1, Math.min(limit, 500));
+        int boundedLimit = Math.clamp(limit, 1, 500);
         return service.changes(UUID.fromString(auth.getName()), since, boundedLimit);
     }
 }

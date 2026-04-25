@@ -1,6 +1,7 @@
 package com.serenade.backend.config;
 
 import com.serenade.backend.domain.auth.JwtAuthFilter;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,13 @@ public class SecurityConfig {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
+    @PostConstruct
+    void validateInternalApiKey() {
+        if (internalApiKey == null || internalApiKey.isBlank()) {
+            throw new IllegalStateException("INTERNAL_API_KEY must be set");
+        }
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -37,14 +45,16 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                .requestMatchers("/internal/**").access((authz, ctx) -> {
-                    String key = ctx.getRequest().getHeader("X-Api-Key");
+                .requestMatchers("/internal/**").access((_, ctx) -> {
+                        assert ctx != null;
+                        String key = ctx.getRequest().getHeader("X-Api-Key");
                     boolean valid = internalApiKey != null && internalApiKey.equals(key);
                     return new org.springframework.security.authorization.AuthorizationDecision(valid);
                 })
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

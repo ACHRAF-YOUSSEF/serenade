@@ -46,10 +46,9 @@ management:
         enabled: true
 
 app:
-  # DEV ONLY default — must be set in prod
-  internal-api-key: ${INTERNAL_API_KEY:dev-internal-key-change-in-prod}
+  internal-api-key: ${INTERNAL_API_KEY:}
   jwt:
-    secret: ${JWT_SECRET:dev-only-change-me-in-prod-min32chars!!}
+    secret: ${JWT_SECRET:}
     access-token-expiry-ms: 900000
     refresh-token-expiry-ms: 604800000
   minio:
