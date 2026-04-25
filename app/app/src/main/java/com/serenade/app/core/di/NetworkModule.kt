@@ -4,6 +4,8 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.serenade.app.BuildConfig
 import com.serenade.app.feature.auth.data.SecureTokenStore
 import com.serenade.app.feature.auth.data.remote.AuthApiService
+import com.serenade.app.feature.playlist.data.remote.PlaylistApiService
+import com.serenade.app.feature.rating.data.remote.RatingApiService
 import com.serenade.app.feature.search.presentation.SearchApiService
 import com.serenade.app.feature.subtitle.data.remote.SubtitleApiService
 import com.serenade.app.feature.track.data.remote.TrackApiService
@@ -79,4 +81,14 @@ object NetworkModule {
     @Singleton
     fun provideSearchApiService(retrofit: Retrofit): SearchApiService =
         retrofit.create(SearchApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun providePlaylistApiService(retrofit: Retrofit): PlaylistApiService =
+        retrofit.create(PlaylistApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideRatingApiService(retrofit: Retrofit): RatingApiService =
+        retrofit.create(RatingApiService::class.java)
 }
