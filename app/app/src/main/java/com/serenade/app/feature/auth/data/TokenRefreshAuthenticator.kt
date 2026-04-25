@@ -45,7 +45,7 @@ class TokenRefreshAuthenticator @Inject constructor(
                 tokenStore.clear()
                 return null
             }
-            val bodyStr = refreshResponse.body?.string() ?: return null
+            val bodyStr = refreshResponse.body.string()
             val auth = json.decodeFromString<AuthResponse>(bodyStr)
             tokenStore.saveTokens(auth.accessToken, auth.refreshToken)
             response.request.newBuilder()
