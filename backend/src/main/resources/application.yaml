@@ -1,4 +1,9 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
+  main:
+    banner-mode: "off"
   application:
     name: backend
   datasource:
