@@ -78,7 +78,9 @@ public class TrackUploadService {
         if (contentType != null && !contentType.isBlank()) {
             String normalized = contentType.toLowerCase(Locale.ROOT);
             boolean looksLikeAudio = normalized.startsWith("audio/")
-                    || normalized.equals("application/octet-stream");
+                    || normalized.equals("application/octet-stream")
+                    || normalized.equals("video/mp4")
+                    || normalized.equals("video/x-m4v");
             if (!looksLikeAudio) {
                 throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             }

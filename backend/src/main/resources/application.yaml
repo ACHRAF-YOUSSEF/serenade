@@ -35,6 +35,14 @@ spring:
       include-message: never
       include-stacktrace: never
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
 management:
   endpoints:
     web:
