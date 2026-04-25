@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     backend_url: str
     worker_api_key: str
     whisper_model: str = "base"
+    admin_port: int = 8001
 
 
 settings = Settings()
