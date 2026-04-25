@@ -31,5 +31,5 @@ def transcribe(audio_path: str, track_id: str, model_size: str = "base") -> list
             "endMs": int(seg.end * 1000),
             "text": text,
         })
-    logger.info("Transcribed %d segments from %s", len(results), audio_path)
+    logger.info("Transcribed %d segments for track %s", len(results), track_id)
     return results

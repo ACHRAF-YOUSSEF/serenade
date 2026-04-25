@@ -61,14 +61,14 @@ def run_pipeline(track_id: str, raw_key: str, minio_client, bucket: str) -> tupl
     with tempfile.TemporaryDirectory() as tmp:
         raw_path = str(Path(tmp) / "raw_input")
         minio_client.fget_object(bucket, raw_key, raw_path)
-        logger.info("Downloaded raw: %s → %s", raw_key, raw_path)
+        logger.info("Downloaded raw object for track %s", track_id)
 
         duration_ms = probe_duration_ms(raw_path)
 
         hls_dir = str(Path(tmp) / "hls")
         Path(hls_dir).mkdir()
         playlist_path = transcode_to_hls(raw_path, hls_dir)
-        logger.info("HLS playlist generated: %s", playlist_path)
+        logger.info("HLS playlist generated for track %s", track_id)
 
         hls_prefix = f"hls/{track_id}"
         for file in Path(hls_dir).iterdir():

@@ -1,15 +1,16 @@
 import asyncio
-import json
 import logging
 import sys
 
 import aio_pika
-import httpx
+from pydantic import ValidationError
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent))
 
 from shared.settings import settings
 from shared.minio_client import get_minio
+from shared.models import TrackUploadedMessage
+from shared.spring_client import SpringClient
 from hls_pipeline import run_pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -19,16 +20,21 @@ QUEUE = "serenade.transcoder"
 
 
 async def handle_message(message: aio_pika.IncomingMessage) -> None:
+    try:
+        job = TrackUploadedMessage.model_validate_json(message.body)
+    except ValidationError as exc:
+        logger.warning("Rejecting malformed transcode message: %s", exc.errors()[0]["type"])
+        await message.reject(requeue=False)
+        return
+
     async with message.process(requeue=True):
-        body = json.loads(message.body)
-        track_id: str = body["trackId"]
-        raw_key: str = body["rawKey"]
-        logger.info("Processing track %s raw=%s", track_id, raw_key)
+        track_id = job.track_id
+        logger.info("Processing track %s", track_id)
 
         try:
             minio = get_minio()
             stream_key, duration_ms = run_pipeline(
-                track_id, raw_key, minio, settings.minio_bucket
+                track_id, job.raw_object_key, minio, settings.minio_bucket
             )
             await _callback_ready(track_id, stream_key, duration_ms)
         except Exception:
@@ -38,30 +44,19 @@ async def handle_message(message: aio_pika.IncomingMessage) -> None:
 
 
 async def _callback_ready(track_id: str, stream_key: str, duration_ms: int) -> None:
-    url = f"{settings.backend_url}/internal/tracks/{track_id}/ready"
-    # API key from env only, never logged
-    headers = {"X-Api-Key": settings.internal_api_key}
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            url,
-            json={"streamUrl": stream_key, "durationMs": duration_ms},
-            headers=headers,
-            timeout=10,
-        )
-        resp.raise_for_status()
+    async with SpringClient() as client:
+        await client.mark_ready(track_id, stream_key, duration_ms)
     logger.info("Marked track %s READY stream=%s duration=%dms", track_id, stream_key, duration_ms)
 
 
 async def _callback_failed(track_id: str) -> None:
-    url = f"{settings.backend_url}/internal/tracks/{track_id}/failed"
-    headers = {"X-Api-Key": settings.internal_api_key}
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(url, headers=headers, timeout=10)
-        resp.raise_for_status()
+    async with SpringClient() as client:
+        await client.mark_failed(track_id)
     logger.info("Marked track %s FAILED", track_id)
 
 
 async def main() -> None:
+    logger.info("Transcoder starting api_key_present=%s", bool(settings.worker_api_key))
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     async with connection:
         channel = await connection.channel()
