@@ -4,6 +4,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.serenade.app.BuildConfig
 import com.serenade.app.feature.auth.data.SecureTokenStore
 import com.serenade.app.feature.auth.data.remote.AuthApiService
+import com.serenade.app.feature.track.data.remote.TrackApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,4 +62,9 @@ object NetworkModule {
     @Singleton
     fun provideAuthApiService(retrofit: Retrofit): AuthApiService =
         retrofit.create(AuthApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTrackApiService(retrofit: Retrofit): TrackApiService =
+        retrofit.create(TrackApiService::class.java)
 }
