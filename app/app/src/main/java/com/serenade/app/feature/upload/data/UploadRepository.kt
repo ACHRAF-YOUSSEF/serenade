@@ -3,20 +3,31 @@ package com.serenade.app.feature.upload.data
 import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.serenade.app.core.database.Genre
+import com.serenade.app.feature.sync.data.PendingOpDao
+import com.serenade.app.feature.sync.data.entity.PendingOpEntity
+import com.serenade.app.feature.sync.data.entity.PendingOpJson
+import com.serenade.app.feature.sync.data.entity.PendingOpType
+import com.serenade.app.feature.sync.data.entity.UploadTrackOpPayload
 import com.serenade.app.feature.upload.data.remote.UploadApiService
 import com.serenade.app.feature.upload.data.remote.UploadResponse
 import com.serenade.app.feature.upload.data.remote.UploadStatusResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.encodeToString
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
+import java.io.File
 import java.io.IOException
+import java.time.Instant
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,6 +42,7 @@ data class UploadFileInfo(
 class UploadRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val api: UploadApiService,
+    private val pendingOpDao: PendingOpDao,
 ) {
     private val textPlain = "text/plain".toMediaType()
 
@@ -90,6 +102,45 @@ class UploadRepository @Inject constructor(
     }
 
     suspend fun status(trackId: String): UploadStatusResponse = api.getUploadStatus(trackId)
+
+    fun isNetworkAvailable(): Boolean {
+        val cm = context.getSystemService(ConnectivityManager::class.java)
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    suspend fun queueUpload(
+        uri: Uri,
+        title: String,
+        artist: String,
+        album: String,
+        genre: Genre,
+    ) {
+        val pendingDir = File(context.filesDir, "pending_uploads")
+        pendingDir.mkdirs()
+        val destFile = File(pendingDir, "${UUID.randomUUID()}.audio")
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            destFile.outputStream().use { out -> input.copyTo(out) }
+        } ?: throw IOException("Cannot open selected file")
+
+        pendingOpDao.insert(
+            PendingOpEntity(
+                id = UUID.randomUUID().toString(),
+                type = PendingOpType.UPLOAD_TRACK,
+                payloadJson = PendingOpJson.encodeToString(
+                    UploadTrackOpPayload(
+                        localFilePath = destFile.absolutePath,
+                        title = title,
+                        artist = artist,
+                        album = album,
+                        genre = genre.name,
+                    )
+                ),
+                createdAt = Instant.now(),
+            )
+        )
+    }
 
     private data class CursorFileInfo(
         val name: String?,

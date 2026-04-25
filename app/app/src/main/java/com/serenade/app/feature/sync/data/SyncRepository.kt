@@ -28,6 +28,14 @@ import com.serenade.app.feature.sync.data.entity.PendingOpJson
 import com.serenade.app.feature.sync.data.entity.PendingOpType
 import com.serenade.app.feature.sync.data.entity.RateOpPayload
 import com.serenade.app.feature.sync.data.entity.RemovePlaylistTrackOpPayload
+import com.serenade.app.feature.sync.data.entity.ReorderPlaylistTracksOpPayload
+import com.serenade.app.feature.sync.data.entity.UploadTrackOpPayload
+import com.serenade.app.feature.upload.data.remote.UploadApiService
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 import com.serenade.app.feature.sync.data.remote.ChangesApiService
 import com.serenade.app.feature.sync.worker.SyncWorker
 import com.serenade.app.feature.track.data.TrackDao
@@ -44,6 +52,7 @@ class SyncRepository @Inject constructor(
     private val api: ChangesApiService,
     private val playlistApi: PlaylistApiService,
     private val ratingApi: RatingApiService,
+    private val uploadApi: UploadApiService,
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val ratingDao: RatingDao,
@@ -178,8 +187,32 @@ class SyncRepository @Inject constructor(
                     tracks.mapIndexed { i, t -> TrackPositionRequest(t.id, i) },
                 )
             }
+            PendingOpType.REORDER_PLAYLIST_TRACKS -> {
+                val payload = PendingOpJson.decodeFromString<ReorderPlaylistTracksOpPayload>(op.payloadJson)
+                playlistApi.setTracks(
+                    payload.playlistId,
+                    payload.orderedTrackIds.mapIndexed { i, id -> TrackPositionRequest(id, i) },
+                )
+            }
+            PendingOpType.UPLOAD_TRACK -> {
+                val payload = PendingOpJson.decodeFromString<UploadTrackOpPayload>(op.payloadJson)
+                val file = File(payload.localFilePath)
+                if (!file.exists()) return
+                val textPlain = "text/plain".toMediaType()
+                val filePart = MultipartBody.Part.createFormData(
+                    "file", file.name, file.asRequestBody("audio/*".toMediaType())
+                )
+                uploadApi.uploadTrack(
+                    title = payload.title.toRequestBody(textPlain),
+                    artist = payload.artist.toRequestBody(textPlain),
+                    album = payload.album.takeIf { it.isNotBlank() }?.toRequestBody(textPlain),
+                    genre = payload.genre.toRequestBody(textPlain),
+                    file = filePart,
+                )
+                file.delete()
+            }
             PendingOpType.UNKNOWN -> Unit
-            else -> throw UnsupportedOperationException("Unsupported pending op: ${op.type}")
+            else -> Unit
         }
     }
 

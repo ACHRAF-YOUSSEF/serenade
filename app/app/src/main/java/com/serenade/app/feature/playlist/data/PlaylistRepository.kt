@@ -15,6 +15,7 @@ import com.serenade.app.feature.sync.data.entity.PendingOpEntity
 import com.serenade.app.feature.sync.data.entity.PendingOpJson
 import com.serenade.app.feature.sync.data.entity.PendingOpType
 import com.serenade.app.feature.sync.data.entity.RemovePlaylistTrackOpPayload
+import com.serenade.app.feature.sync.data.entity.ReorderPlaylistTracksOpPayload
 import com.serenade.app.feature.playlist.data.remote.dto.TrackPositionRequest
 import com.serenade.app.feature.track.data.TrackDao
 import com.serenade.app.feature.track.data.entity.TrackEntity
@@ -121,6 +122,27 @@ class PlaylistRepository @Inject constructor(
         runCatching {
             val remaining = playlistDao.getTracksForPlaylistOnce(playlistId)
             api.setTracks(playlistId, remaining.mapIndexed { i, t -> TrackPositionRequest(t.id, i) })
+            pendingOpDao.deleteById(opId)
+        }
+    }
+
+    suspend fun reorderTracks(playlistId: String, orderedTrackIds: List<String>) {
+        orderedTrackIds.forEachIndexed { index, trackId ->
+            playlistDao.insertCrossRef(PlaylistTrackCrossRef(playlistId, trackId, index))
+        }
+        val opId = UUID.randomUUID().toString()
+        pendingOpDao.insert(
+            PendingOpEntity(
+                id = opId,
+                type = PendingOpType.REORDER_PLAYLIST_TRACKS,
+                payloadJson = PendingOpJson.encodeToString(
+                    ReorderPlaylistTracksOpPayload(playlistId, orderedTrackIds)
+                ),
+                createdAt = Instant.now(),
+            )
+        )
+        runCatching {
+            api.setTracks(playlistId, orderedTrackIds.mapIndexed { i, id -> TrackPositionRequest(id, i) })
             pendingOpDao.deleteById(opId)
         }
     }

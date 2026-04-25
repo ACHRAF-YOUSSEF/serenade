@@ -91,6 +91,25 @@ class UploadViewModel @Inject constructor(
             return
         }
 
+        if (!uploadRepository.isNetworkAvailable()) {
+            viewModelScope.launch {
+                runCatching {
+                    uploadRepository.queueUpload(
+                        uri = file.uri,
+                        title = snapshot.title,
+                        artist = snapshot.artist,
+                        album = snapshot.album,
+                        genre = snapshot.genre,
+                    )
+                }.onSuccess {
+                    _state.update { it.copy(status = STATUS_QUEUED, error = null) }
+                }.onFailure { err ->
+                    _state.update { it.copy(error = err.message ?: "Failed to queue upload") }
+                }
+            }
+            return
+        }
+
         viewModelScope.launch {
             pollJob?.cancel()
             _state.update {
@@ -181,6 +200,7 @@ class UploadViewModel @Inject constructor(
         const val STATUS_PROCESSING = "PROCESSING"
         const val STATUS_READY = "READY"
         const val STATUS_FAILED = "FAILED"
+        const val STATUS_QUEUED = "QUEUED"
         const val STATUS_POLL_DELAY_MS = 2_500L
         const val MAX_STATUS_POLLS = 120
     }

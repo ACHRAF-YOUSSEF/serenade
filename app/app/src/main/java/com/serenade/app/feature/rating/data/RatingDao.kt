@@ -23,6 +23,9 @@ interface RatingDao {
     @Update
     suspend fun update(rating: RatingEntity)
 
+    @Query("SELECT * FROM ratings WHERE targetType = :targetType AND targetId = :targetId LIMIT 1")
+    suspend fun getByTargetOnce(targetType: RatingTargetType, targetId: String): RatingEntity?
+
     @Query("DELETE FROM ratings WHERE id = :id")
     suspend fun deleteById(id: String)
 }

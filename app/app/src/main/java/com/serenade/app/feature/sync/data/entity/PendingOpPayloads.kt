@@ -36,3 +36,18 @@ data class RemovePlaylistTrackOpPayload(
     val playlistId: String,
     val trackId: String,
 )
+
+@Serializable
+data class ReorderPlaylistTracksOpPayload(
+    val playlistId: String,
+    val orderedTrackIds: List<String>,
+)
+
+@Serializable
+data class UploadTrackOpPayload(
+    val localFilePath: String,
+    val title: String,
+    val artist: String,
+    val album: String,
+    val genre: String,
+)

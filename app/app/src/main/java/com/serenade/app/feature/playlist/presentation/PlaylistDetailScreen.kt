@@ -9,6 +9,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -97,10 +99,17 @@ fun PlaylistDetailScreen(
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(s.detail.tracks, key = { it.id }) { track ->
+                                val idx = s.detail.tracks.indexOf(track)
                                 PlaylistTrackRow(
                                     track = track,
                                     onClick = { onTrackClick(track) },
                                     onRemove = { viewModel.removeTrack(track.id) },
+                                    onMoveUp = if (idx > 0) {
+                                        { viewModel.moveTrackUp(track.id) }
+                                    } else null,
+                                    onMoveDown = if (idx < s.detail.tracks.size - 1) {
+                                        { viewModel.moveTrackDown(track.id) }
+                                    } else null,
                                 )
                                 HorizontalDivider()
                             }
@@ -188,7 +197,13 @@ private fun PlaylistSummaryHeader(
 }
 
 @Composable
-private fun PlaylistTrackRow(track: TrackResponse, onClick: () -> Unit, onRemove: () -> Unit) {
+private fun PlaylistTrackRow(
+    track: TrackResponse,
+    onClick: () -> Unit,
+    onRemove: () -> Unit,
+    onMoveUp: (() -> Unit)?,
+    onMoveDown: (() -> Unit)?,
+) {
     ListItem(
         headlineContent = {
             Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -200,8 +215,16 @@ private fun PlaylistTrackRow(track: TrackResponse, onClick: () -> Unit, onRemove
             Icon(Icons.Default.MusicNote, contentDescription = null)
         },
         trailingContent = {
-            IconButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = "Remove track")
+            Row {
+                IconButton(onClick = { onMoveUp?.invoke() }, enabled = onMoveUp != null) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move up")
+                }
+                IconButton(onClick = { onMoveDown?.invoke() }, enabled = onMoveDown != null) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move down")
+                }
+                IconButton(onClick = onRemove) {
+                    Icon(Icons.Default.Delete, contentDescription = "Remove track")
+                }
             }
         },
         modifier = Modifier.clickable(onClick = onClick),
