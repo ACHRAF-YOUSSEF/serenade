@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -46,8 +48,9 @@ public class PlaylistService {
     }
 
     @Transactional(readOnly = true)
-    public PlaylistDetailResponse getDetail(UUID playlistId) {
+    public PlaylistDetailResponse getDetail(UUID playlistId, UUID userId) {
         Playlist p = findOrThrow(playlistId);
+        assertOwner(p, userId);
         List<TrackResponse> trackList = playlistTracks.findByIdPlaylistIdOrderByPositionAsc(playlistId)
                 .stream().map(pt -> TrackResponse.from(pt.getTrack())).toList();
         return new PlaylistDetailResponse(p.getId(), p.getName(), p.isCopy(), p.getSourcePlaylistId(),
@@ -77,6 +80,7 @@ public class PlaylistService {
     public void setTracks(UUID playlistId, UUID userId, List<TrackPositionRequest> req) {
         Playlist p = findOrThrow(playlistId);
         assertOwner(p, userId);
+        assertUniqueTracksAndPositions(req);
         playlistTracks.deleteByIdPlaylistId(playlistId);
         List<PlaylistTrack> lines = req.stream().map(r -> {
             Track t = tracks.findById(r.trackId())
@@ -89,8 +93,9 @@ public class PlaylistService {
     @Transactional
     public PlaylistSummaryResponse copy(UUID playlistId, UUID userId) {
         Playlist src = findOrThrow(playlistId);
+        assertOwner(src, userId);
         User owner = users.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        Playlist copy = new Playlist(src.getName(), owner);
+        Playlist copy = new Playlist(src.getName() + " Copy", owner);
         copy.markAsCopy(src.getId());
         playlists.save(copy);
         List<PlaylistTrack> srcTracks = playlistTracks.findByIdPlaylistIdOrderByPositionAsc(playlistId);
@@ -116,6 +121,16 @@ public class PlaylistService {
 
     private void assertOwner(Playlist p, UUID userId) {
         if (!p.getOwner().getId().equals(userId)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+
+    private void assertUniqueTracksAndPositions(List<TrackPositionRequest> req) {
+        Set<UUID> trackIds = new HashSet<>();
+        Set<Integer> positions = new HashSet<>();
+        for (TrackPositionRequest item : req) {
+            if (!trackIds.add(item.trackId()) || !positions.add(item.position())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
     }
 
     private double avgRating(UUID playlistId) {

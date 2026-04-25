@@ -29,8 +29,8 @@ public class PlaylistController {
     }
 
     @GetMapping("/{id}")
-    public PlaylistDetailResponse get(@PathVariable UUID id) {
-        return service.getDetail(id);
+    public PlaylistDetailResponse get(@PathVariable UUID id, Authentication auth) {
+        return service.getDetail(id, UUID.fromString(auth.getName()));
     }
 
     @PostMapping
