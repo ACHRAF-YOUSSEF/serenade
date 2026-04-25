@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenade.app.feature.playlist.data.PlaylistRepository
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistDetailResponse
-import com.serenade.app.feature.playlist.data.remote.dto.TrackResponse
+import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.rating.data.RatingDao
 import com.serenade.app.feature.rating.data.RatingRepository
 import com.serenade.app.feature.rating.data.entity.RatingTargetType
@@ -39,14 +39,17 @@ class PlaylistDetailViewModel @Inject constructor(
     val allTracks: StateFlow<List<TrackEntity>> = trackDao.getAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    init { load() }
+    init {
+        load()
+    }
 
     fun load() {
         viewModelScope.launch {
             _state.value = PlaylistDetailUiState.Loading
             _state.value = try {
                 val detail = playlistRepository.getDetail(playlistId)
-                val myRating = ratingDao.getByTargetOnce(RatingTargetType.PLAYLIST, playlistId)?.value
+                val myRating =
+                    ratingDao.getByTargetOnce(RatingTargetType.PLAYLIST, playlistId)?.value
                 PlaylistDetailUiState.Ready(detail, myRating)
             } catch (e: Exception) {
                 PlaylistDetailUiState.Error(e.message ?: "Failed to load playlist")
