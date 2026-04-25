@@ -72,10 +72,13 @@ async def main() -> None:
         await queue.consume(partial(handle_message, state=state))
 
         config = uvicorn.Config(
-            admin_app, host="0.0.0.0", port=settings.admin_port, log_level="warning"
+            admin_app,
+            host=settings.admin_host,
+            port=settings.subtitler_admin_port,
+            log_level="warning",
         )
         server = uvicorn.Server(config)
-        logger.info("Admin API on port %d", settings.admin_port)
+        logger.info("Admin API on port %d", settings.subtitler_admin_port)
         await server.serve()
 
 
