@@ -105,3 +105,7 @@ subtitles/
 .claude/
 *.md
 !readme.md
+# Added by code-review-graph
+.code-review-graph/
+.gradle-user-home/
+.codex
