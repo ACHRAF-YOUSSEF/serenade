@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,7 +18,7 @@ fun PlayerScreen(
     trackTitle: String,
     trackArtist: String,
     onDismiss: () -> Unit,
-    viewModel: PlayerViewModel = hiltViewModel(),
+    viewModel: PlayerViewModel
 ) {
     val state by viewModel.state.collectAsState()
     val currentCue by viewModel.currentCue.collectAsState()

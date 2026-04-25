@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -83,6 +84,7 @@ fun AppNavigation(
                         }
                     },
                     onNavigateToRegister = { navController.navigate(ROUTE_REGISTER) },
+                    viewModel = hiltViewModel(),
                 )
             }
             composable(ROUTE_REGISTER) {
@@ -93,6 +95,7 @@ fun AppNavigation(
                         }
                     },
                     onNavigateToLogin = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
                 )
             }
             composable(ROUTE_HOME) {
@@ -105,6 +108,7 @@ fun AppNavigation(
                     },
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     modifier = Modifier.fillMaxSize(),
+                    viewModel = hiltViewModel(),
                 )
             }
             composable(ROUTE_SEARCH) {
@@ -116,6 +120,7 @@ fun AppNavigation(
                         navController.navigate(ROUTE_PLAYER)
                     },
                     onBack = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
                 )
             }
             composable(ROUTE_PLAYER) {
@@ -123,6 +128,7 @@ fun AppNavigation(
                     trackTitle = nowPlayingTrack?.title ?: "",
                     trackArtist = nowPlayingTrack?.artist ?: "",
                     onDismiss = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
                 )
             }
         }

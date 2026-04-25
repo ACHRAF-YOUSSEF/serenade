@@ -5,8 +5,6 @@ import com.serenade.app.feature.download.data.entity.DownloadState
 import com.serenade.app.feature.rating.data.entity.RatingTargetType
 import com.serenade.app.feature.sync.data.entity.PendingOpType
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Instant
 

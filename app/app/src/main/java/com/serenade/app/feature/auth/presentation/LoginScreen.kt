@@ -15,7 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun LoginScreen(
     onSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel(),
+    viewModel: AuthViewModel
 ) {
     val state by viewModel.state.collectAsState()
 

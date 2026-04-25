@@ -22,7 +22,7 @@ import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 fun SearchScreen(
     onTrackClick: (TrackResponse) -> Unit,
     onBack: () -> Unit,
-    viewModel: SearchViewModel = hiltViewModel(),
+    viewModel: SearchViewModel,
 ) {
     val query by viewModel.query.collectAsState()
     val selectedGenre by viewModel.genre.collectAsState()

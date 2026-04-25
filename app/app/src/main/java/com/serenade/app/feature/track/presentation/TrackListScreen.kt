@@ -23,7 +23,7 @@ fun TrackListScreen(
     onTrackClick: (TrackEntity) -> Unit,
     onSearchClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: TrackListViewModel = hiltViewModel(),
+    viewModel: TrackListViewModel,
 ) {
     val state by viewModel.state.collectAsState()
     val syncing by viewModel.syncing.collectAsState()

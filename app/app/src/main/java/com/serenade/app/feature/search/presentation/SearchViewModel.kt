@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -21,6 +22,7 @@ class SearchViewModel @Inject constructor(
     private val _genre = MutableStateFlow<String?>(null)
     val genre: StateFlow<String?> = _genre
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val results: StateFlow<List<TrackResponse>> = combine(_query, _genre) { q, g -> q to g }
         .debounce(300)
         .flatMapLatest { (q, g) ->
