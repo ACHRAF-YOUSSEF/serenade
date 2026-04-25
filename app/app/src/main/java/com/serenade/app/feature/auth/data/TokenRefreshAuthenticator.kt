@@ -24,6 +24,16 @@ class TokenRefreshAuthenticator @Inject constructor(
 
     @Synchronized
     override fun authenticate(route: Route?, response: Response): Request? {
+        val tokenThatFailed = response.request.header("Authorization")
+            ?.removePrefix("Bearer ")
+        val currentToken = tokenStore.getAccessToken()
+
+        if (currentToken != null && currentToken != tokenThatFailed) {
+            return response.request.newBuilder()
+                .header("Authorization", "Bearer $currentToken")
+                .build()
+        }
+
         if (response.priorResponse != null) return null
 
         val refreshToken = tokenStore.getRefreshToken() ?: run {
