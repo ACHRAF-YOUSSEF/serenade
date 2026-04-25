@@ -66,7 +66,12 @@ class UploadRepository @Inject constructor(
         onProgress: (bytesWritten: Long, contentLength: Long) -> Unit,
     ): UploadResponse {
         val info = inspect(uri)
-        val mediaType = (info.contentType ?: "application/octet-stream").toMediaType()
+        val resolvedType = when {
+            info.contentType == "video/mp4" && info.name.endsWith(".m4a", ignoreCase = true) -> "audio/mp4"
+            info.contentType != null -> info.contentType
+            else -> "application/octet-stream"
+        }
+        val mediaType = resolvedType.toMediaType()
         val body = ContentUriRequestBody(
             resolver = context.contentResolver,
             uri = uri,
