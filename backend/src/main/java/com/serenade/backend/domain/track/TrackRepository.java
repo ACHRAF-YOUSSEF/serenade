@@ -6,12 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface TrackRepository extends JpaRepository<Track, UUID> {
     Page<Track> findByStatus(TrackStatus status, Pageable pageable);
     Optional<Track> findByIdAndStatus(UUID id, TrackStatus status);
+    List<Track> findByStatusAndUpdatedAtAfterOrderByUpdatedAtAsc(TrackStatus status, Instant since, Pageable pageable);
 
     @Query(value = """
             SELECT * FROM tracks

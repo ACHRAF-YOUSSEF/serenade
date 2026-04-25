@@ -53,4 +53,5 @@ public class Rating {
     public String getTargetType() { return targetType; }
     public UUID getTargetId() { return targetId; }
     public int getValue() { return value; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }

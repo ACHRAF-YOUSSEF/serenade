@@ -47,7 +47,7 @@ public class RatingService {
         rating.setValue(req.value());
         ratings.save(rating);
         double avg = refreshAvgCache(req.targetType(), req.targetId());
-        return new RatingResponse(rating.getId(), req.targetType(), req.targetId(), rating.getValue(), avg);
+        return new RatingResponse(rating.getId(), req.targetType(), req.targetId(), rating.getValue(), avg, rating.getUpdatedAt());
     }
 
     @Transactional(readOnly = true)
