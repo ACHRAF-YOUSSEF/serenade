@@ -7,19 +7,41 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.auth.presentation.LoginScreen
 import com.serenade.app.feature.auth.presentation.RegisterScreen
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.feature.player.presentation.MiniPlayerBar
 import com.serenade.app.feature.player.presentation.PlayerScreen
+import com.serenade.app.feature.search.presentation.SearchScreen
 import com.serenade.app.feature.track.data.entity.TrackEntity
+import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
+import java.time.Instant
+
+private fun TrackResponse.toEntity() = TrackEntity(
+    id = id,
+    remoteId = id,
+    title = title,
+    artist = artist,
+    album = album ?: "",
+    genre = runCatching { Genre.valueOf(genre) }.getOrDefault(Genre.OTHER),
+    durationMs = durationMs ?: 0L,
+    artworkUrl = artworkUrl,
+    localPath = null,
+    streamUrl = streamUrl,
+    streamUrlExpiresAt = null,
+    isDownloaded = false,
+    providerId = "serenade",
+    updatedAt = Instant.now(),
+)
 
 private const val ROUTE_LOGIN = "login"
 private const val ROUTE_REGISTER = "register"
 private const val ROUTE_HOME = "home"
 private const val ROUTE_PLAYER = "player"
+private const val ROUTE_SEARCH = "search"
 
 @Composable
 fun AppNavigation(
@@ -81,7 +103,19 @@ fun AppNavigation(
                             playerController.play(track.id, url)
                         }
                     },
+                    onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     modifier = Modifier.fillMaxSize(),
+                )
+            }
+            composable(ROUTE_SEARCH) {
+                SearchScreen(
+                    onTrackClick = { r ->
+                        val entity = r.toEntity()
+                        nowPlayingTrack = entity
+                        entity.streamUrl?.let { url -> playerController.play(entity.id, url) }
+                        navController.navigate(ROUTE_PLAYER)
+                    },
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(ROUTE_PLAYER) {

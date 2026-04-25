@@ -4,6 +4,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.serenade.app.BuildConfig
 import com.serenade.app.feature.auth.data.SecureTokenStore
 import com.serenade.app.feature.auth.data.remote.AuthApiService
+import com.serenade.app.feature.search.presentation.SearchApiService
 import com.serenade.app.feature.subtitle.data.remote.SubtitleApiService
 import com.serenade.app.feature.track.data.remote.TrackApiService
 import dagger.Module
@@ -73,4 +74,9 @@ object NetworkModule {
     @Singleton
     fun provideSubtitleApiService(retrofit: Retrofit): SubtitleApiService =
         retrofit.create(SubtitleApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSearchApiService(retrofit: Retrofit): SearchApiService =
+        retrofit.create(SearchApiService::class.java)
 }

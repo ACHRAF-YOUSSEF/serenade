@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -20,6 +21,7 @@ import com.serenade.app.feature.track.data.entity.TrackEntity
 @Composable
 fun TrackListScreen(
     onTrackClick: (TrackEntity) -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TrackListViewModel = hiltViewModel(),
 ) {
@@ -27,7 +29,16 @@ fun TrackListScreen(
     val syncing by viewModel.syncing.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Serenade") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Serenade") },
+                actions = {
+                    IconButton(onClick = onSearchClick) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                },
+            )
+        },
         modifier = modifier,
     ) { padding ->
         PullToRefreshBox(
