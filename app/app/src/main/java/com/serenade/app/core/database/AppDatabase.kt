@@ -34,7 +34,7 @@ import com.serenade.app.feature.track.data.entity.TrackEntity
         RatingEntity::class,
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(AppConverters::class)
 abstract class AppDatabase : RoomDatabase() {

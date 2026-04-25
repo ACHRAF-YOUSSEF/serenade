@@ -9,6 +9,6 @@ data class ProviderEntity(
     val manifestUrl: String,
     val name: String,
     val version: String,
-    val capabilities: String,
+    val capabilities: List<String>,
     val enabled: Boolean
 )

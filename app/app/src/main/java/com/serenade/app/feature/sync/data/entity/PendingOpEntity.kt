@@ -7,7 +7,7 @@ import java.time.Instant
 @Entity(tableName = "pending_ops")
 data class PendingOpEntity(
     @PrimaryKey val id: String,
-    val type: String,
+    val type: PendingOpType,
     val payloadJson: String,
     val createdAt: Instant
 )

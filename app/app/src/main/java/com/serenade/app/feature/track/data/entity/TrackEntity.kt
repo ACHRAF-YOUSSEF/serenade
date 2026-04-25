@@ -17,6 +17,7 @@ data class TrackEntity(
     val artworkUrl: String?,
     val localPath: String?,
     val streamUrl: String?,
+    val streamUrlExpiresAt: Instant?,
     val isDownloaded: Boolean,
     val providerId: String,
     val updatedAt: Instant

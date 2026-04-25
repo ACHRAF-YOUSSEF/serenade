@@ -39,7 +39,12 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -82,8 +87,7 @@ dependencies {
     // DataStore
     implementation(libs.datastore.preferences)
 
-    // Security
-    implementation(libs.security.crypto)
+    // Biometric
     implementation(libs.biometric)
 
     // Coroutines

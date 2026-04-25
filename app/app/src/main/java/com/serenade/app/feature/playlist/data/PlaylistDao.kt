@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.serenade.app.feature.playlist.data.entity.PlaylistEntity
 import com.serenade.app.feature.playlist.data.entity.PlaylistTrackCrossRef
+import com.serenade.app.feature.track.data.entity.TrackEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -33,8 +34,19 @@ interface PlaylistDao {
     @Delete
     suspend fun deleteCrossRef(crossRef: PlaylistTrackCrossRef)
 
+    @Query(
+        """
+        SELECT tracks.*
+        FROM tracks
+        INNER JOIN playlist_track_cross_refs refs ON refs.trackId = tracks.id
+        WHERE refs.playlistId = :playlistId
+        ORDER BY refs.position ASC
+        """
+    )
+    fun getTracksForPlaylist(playlistId: String): Flow<List<TrackEntity>>
+
     @Query("SELECT * FROM playlist_track_cross_refs WHERE playlistId = :playlistId ORDER BY position ASC")
-    fun getTracksForPlaylist(playlistId: String): Flow<List<PlaylistTrackCrossRef>>
+    fun getTrackRefsForPlaylist(playlistId: String): Flow<List<PlaylistTrackCrossRef>>
 
     @Query("DELETE FROM playlist_track_cross_refs WHERE playlistId = :playlistId")
     suspend fun clearTracksForPlaylist(playlistId: String)
