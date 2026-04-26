@@ -8,9 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,6 +20,7 @@ fun PlayerScreen(
     trackTitle: String,
     trackArtist: String,
     trackDurationMs: Long,
+    artworkUrl: String?,
     onDismiss: () -> Unit,
     viewModel: PlayerViewModel
 ) {
@@ -45,7 +48,6 @@ fun PlayerScreen(
         ) {
             Spacer(modifier = Modifier.weight(1f))
 
-            // Artwork placeholder
             Surface(
                 modifier = Modifier.size(280.dp),
                 shape = MaterialTheme.shapes.large,
@@ -59,6 +61,14 @@ fun PlayerScreen(
                         modifier = Modifier.size(80.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (!artworkUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = artworkUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
             }
 

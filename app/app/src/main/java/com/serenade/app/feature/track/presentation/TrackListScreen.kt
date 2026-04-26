@@ -18,9 +18,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.serenade.app.feature.download.data.entity.DownloadEntity
 import com.serenade.app.feature.download.data.entity.DownloadState
 import com.serenade.app.feature.track.data.entity.TrackEntity
@@ -117,7 +119,23 @@ private fun TrackRow(
             Text(track.artist, maxLines = 1, overflow = TextOverflow.Ellipsis)
         },
         leadingContent = {
-            Icon(Icons.Default.MusicNote, contentDescription = null)
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.MusicNote, contentDescription = null)
+                    if (!track.artworkUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = track.artworkUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
         },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {

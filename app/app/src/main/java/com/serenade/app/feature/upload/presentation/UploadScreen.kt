@@ -20,8 +20,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.upload.data.UploadFileInfo
 
@@ -127,7 +130,18 @@ private fun ArtworkPickerCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Default.Image, contentDescription = null)
+            if (artworkUri != null) {
+                AsyncImage(
+                    model = artworkUri,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(MaterialTheme.shapes.extraSmall),
+                )
+            } else {
+                Icon(Icons.Default.Image, contentDescription = null)
+            }
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

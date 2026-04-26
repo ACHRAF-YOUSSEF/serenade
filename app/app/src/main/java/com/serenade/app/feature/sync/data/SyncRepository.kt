@@ -1,6 +1,14 @@
 package com.serenade.app.feature.sync.data
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -201,6 +209,7 @@ class SyncRepository @Inject constructor(
                 val file = File(payload.localFilePath)
                 if (!file.exists()) {
                     android.util.Log.w(TAG, "Upload file missing for queued op ${op.id}, discarding: ${payload.localFilePath}")
+                    notifyUploadFileMissing(payload.title)
                     return
                 }
                 val textPlain = "text/plain".toMediaType()
@@ -220,6 +229,24 @@ class SyncRepository @Inject constructor(
             PendingOpType.UNKNOWN -> Unit
             else -> Unit
         }
+    }
+
+    private fun notifyUploadFileMissing(trackTitle: String) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(UPLOAD_CHANNEL_ID, "Uploads", NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) return
+        val notification = NotificationCompat.Builder(context, UPLOAD_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setContentTitle("Upload failed")
+            .setContentText("\"$trackTitle\" — file no longer available")
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(trackTitle.hashCode(), notification)
     }
 
     private fun PlaylistSummaryResponse.toEntity(): PlaylistEntity =
@@ -250,5 +277,6 @@ class SyncRepository @Inject constructor(
         const val KEY_CURSOR = "changes_cursor"
         const val INITIAL_CURSOR = "1970-01-01T00:00:00Z"
         const val LOCAL_OWNER = "me"
+        const val UPLOAD_CHANNEL_ID = "uploads"
     }
 }

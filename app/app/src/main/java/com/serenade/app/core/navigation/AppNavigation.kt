@@ -100,6 +100,7 @@ fun AppNavigation(
                 state = playbackState,
                 trackTitle = nowPlayingTrack?.title,
                 trackArtist = nowPlayingTrack?.artist,
+                artworkUrl = nowPlayingTrack?.artworkUrl,
                 onTogglePlayPause = playerController::togglePlayPause,
                 onBarClick = {
                     if (playbackState.currentTrackId != null) {
@@ -203,6 +204,7 @@ fun AppNavigation(
                     trackTitle = nowPlayingTrack?.title ?: "",
                     trackArtist = nowPlayingTrack?.artist ?: "",
                     trackDurationMs = nowPlayingTrack?.durationMs ?: 0L,
+                    artworkUrl = nowPlayingTrack?.artworkUrl,
                     onDismiss = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
                 )
