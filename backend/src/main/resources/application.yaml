@@ -43,15 +43,26 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+logging:
+  structured:
+    format:
+      console: logstash
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 app:
   internal-api-key: ${INTERNAL_API_KEY:}

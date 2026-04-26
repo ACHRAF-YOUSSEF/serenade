@@ -1,10 +1,12 @@
 package com.serenade.backend.domain.track;
 
 import com.serenade.backend.config.RabbitConfig;
+import com.serenade.backend.config.RequestIdFilter;
 import com.serenade.backend.domain.track.dto.UploadStatusResponse;
 import com.serenade.backend.domain.track.dto.UploadResponse;
 import com.serenade.backend.domain.user.User;
 import com.serenade.backend.domain.user.UserRepository;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -49,8 +51,18 @@ public class TrackUploadService {
         String rawKey = "raw/" + track.getId();
         minio.uploadRaw(rawKey, file);
 
-        rabbit.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.KEY_UPLOADED,
-                Map.of("trackId", track.getId().toString(), "rawKey", rawKey));
+        rabbit.convertAndSend(
+                RabbitConfig.EXCHANGE,
+                RabbitConfig.KEY_UPLOADED,
+                Map.of("trackId", track.getId().toString(), "rawKey", rawKey),
+                message -> {
+                    String requestId = MDC.get(RequestIdFilter.MDC_KEY);
+                    if (requestId != null && !requestId.isBlank()) {
+                        message.getMessageProperties().setHeader(RequestIdFilter.HEADER_NAME, requestId);
+                    }
+                    return message;
+                }
+        );
 
         return new UploadResponse(track.getId(), track.getStatus().name());
     }
