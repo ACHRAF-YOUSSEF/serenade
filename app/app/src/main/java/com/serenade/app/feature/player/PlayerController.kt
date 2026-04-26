@@ -17,6 +17,7 @@ import java.io.File
 import java.net.URI
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.net.toUri
 
 data class PlaybackItem(
     val trackId: String,
@@ -131,7 +132,7 @@ class PlayerController @Inject constructor(
             metadataBuilder.setDurationMs(durationMs)
         }
         artworkUrl?.takeUnless { it.isBlank() }?.let { artwork ->
-            metadataBuilder.setArtworkUri(Uri.parse(artwork.resolvePlaybackUrl()))
+            metadataBuilder.setArtworkUri(artwork.resolvePlaybackUrl().toUri())
         }
         val builder = MediaItem.Builder()
             .setMediaId(trackId)
