@@ -23,8 +23,11 @@ class SerenadePlayerService : MediaSessionService() {
         mediaSession
 
     override fun onDestroy() {
-        mediaSession?.release()
-        mediaSession = null
+        mediaSession?.run {
+            player.release()
+            release()
+            mediaSession = null
+        }
         super.onDestroy()
     }
 }

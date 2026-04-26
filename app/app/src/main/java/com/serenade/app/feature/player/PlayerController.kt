@@ -1,15 +1,10 @@
 package com.serenade.app.feature.player
 
-import android.content.Context
-import android.content.Intent
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
-import androidx.core.content.ContextCompat
 import androidx.media3.exoplayer.ExoPlayer
 import com.serenade.app.BuildConfig
-import com.serenade.app.feature.player.service.SerenadePlayerService
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -33,7 +28,6 @@ data class PlaybackState(
 
 @Singleton
 class PlayerController @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     val player: ExoPlayer,
 ) {
     private val _state = MutableStateFlow(PlaybackState())
@@ -53,7 +47,6 @@ class PlayerController @Inject constructor(
 
     fun playQueue(items: List<PlaybackItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
-        ensurePlaybackServiceStarted()
         val mediaItems = items.map { it.toMediaItem() }
         val boundedIndex = startIndex.coerceIn(mediaItems.indices)
         player.setMediaItems(mediaItems, boundedIndex, 0L)
@@ -63,12 +56,7 @@ class PlayerController @Inject constructor(
     }
 
     fun togglePlayPause() {
-        if (player.isPlaying) {
-            player.pause()
-        } else {
-            ensurePlaybackServiceStarted()
-            player.play()
-        }
+        if (player.isPlaying) player.pause() else player.play()
         syncPlaybackState()
     }
 
@@ -79,7 +67,6 @@ class PlayerController @Inject constructor(
 
     fun skipToPrevious() {
         if (player.hasPreviousMediaItem()) {
-            ensurePlaybackServiceStarted()
             player.seekToPreviousMediaItem()
             player.play()
             syncPlaybackState()
@@ -88,7 +75,6 @@ class PlayerController @Inject constructor(
 
     fun skipToNext() {
         if (player.hasNextMediaItem()) {
-            ensurePlaybackServiceStarted()
             player.seekToNextMediaItem()
             player.play()
             syncPlaybackState()
@@ -152,10 +138,5 @@ class PlayerController @Inject constructor(
 
     private fun String.isHlsManifestUrl(): Boolean {
         return substringBefore('?').endsWith(".m3u8", ignoreCase = true)
-    }
-
-    private fun ensurePlaybackServiceStarted() {
-        val intent = Intent(context, SerenadePlayerService::class.java)
-        ContextCompat.startForegroundService(context, intent)
     }
 }
