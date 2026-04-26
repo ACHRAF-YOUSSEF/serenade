@@ -8,6 +8,9 @@ import android.os.Build
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -25,6 +28,22 @@ class SerenadePlayerService : MediaSessionService() {
     lateinit var player: ExoPlayer
 
     private var mediaSession: MediaSession? = null
+    private val notificationRefreshListener = object : Player.Listener {
+        @OptIn(UnstableApi::class)
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            triggerNotificationUpdate()
+        }
+
+        @OptIn(UnstableApi::class)
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+            triggerNotificationUpdate()
+        }
+
+        @OptIn(UnstableApi::class)
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            triggerNotificationUpdate()
+        }
+    }
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -37,6 +56,7 @@ class SerenadePlayerService : MediaSessionService() {
             mediaNotificationProvider
         )
         mediaSession = MediaSession.Builder(this, player).build()
+        player.addListener(notificationRefreshListener)
     }
 
     @OptIn(UnstableApi::class)
@@ -49,6 +69,7 @@ class SerenadePlayerService : MediaSessionService() {
         mediaSession
 
     override fun onDestroy() {
+        player.removeListener(notificationRefreshListener)
         mediaSession?.run {
             release()
             mediaSession = null
