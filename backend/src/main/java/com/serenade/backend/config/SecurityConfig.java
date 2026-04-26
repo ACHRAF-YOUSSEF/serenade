@@ -76,6 +76,7 @@ public class SecurityConfig {
                             return new org.springframework.security.authorization.AuthorizationDecision(valid);
                         })
                         .requestMatchers("/hls/**").permitAll()
+                        .requestMatchers("/artwork/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
