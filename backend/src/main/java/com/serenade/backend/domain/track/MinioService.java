@@ -41,7 +41,7 @@ public class MinioService {
     public String presignedGetUrl(String objectKey) {
         try {
             int expiryMinutes = props.minio().presignedUrlExpiryMinutes();
-            int clampedExpiry = Math.min(expiryMinutes, 15);
+            int clampedExpiry = Math.clamp(expiryMinutes, 1, 15);
             return minio.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(props.minio().bucket())

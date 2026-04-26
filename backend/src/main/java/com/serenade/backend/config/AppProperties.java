@@ -2,8 +2,10 @@ package com.serenade.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.List;
+
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(Jwt jwt, Minio minio) {
+public record AppProperties(Jwt jwt, Minio minio, Cors cors, RateLimit rateLimit) {
 
     public record Jwt(String secret, long accessTokenExpiryMs, long refreshTokenExpiryMs) {}
 
@@ -13,4 +15,8 @@ public record AppProperties(Jwt jwt, Minio minio) {
             String secretKey,
             String bucket,
             int presignedUrlExpiryMinutes) {}
+
+    public record Cors(List<String> allowedOrigins) {}
+
+    public record RateLimit(List<String> trustedProxies) {}
 }
