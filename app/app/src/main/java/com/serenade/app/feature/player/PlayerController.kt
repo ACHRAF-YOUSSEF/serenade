@@ -1,10 +1,14 @@
 package com.serenade.app.feature.player
 
+import android.content.Context
+import android.content.Intent
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.serenade.app.BuildConfig
+import com.serenade.app.feature.player.service.SerenadePlayerService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -29,6 +33,7 @@ data class PlaybackState(
 @Singleton
 class PlayerController @Inject constructor(
     val player: ExoPlayer,
+    @param:ApplicationContext private val context: Context,
 ) {
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
@@ -47,6 +52,7 @@ class PlayerController @Inject constructor(
 
     fun playQueue(items: List<PlaybackItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
+        context.startForegroundService(Intent(context, SerenadePlayerService::class.java))
         val mediaItems = items.map { it.toMediaItem() }
         val boundedIndex = startIndex.coerceIn(mediaItems.indices)
         player.setMediaItems(mediaItems, boundedIndex, 0L)

@@ -9,7 +9,7 @@ interface SearchApiService {
     @GET("api/search")
     suspend fun search(
         @Query("q") q: String = "",
-        @Query("genre") genre: String? = null,
+        @Query("genres") genres: String? = null,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20,
     ): PageResponse<TrackResponse>

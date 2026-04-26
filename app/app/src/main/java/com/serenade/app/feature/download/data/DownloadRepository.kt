@@ -6,6 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.serenade.app.BuildConfig
 import com.serenade.app.feature.download.data.entity.DownloadEntity
 import com.serenade.app.feature.download.data.entity.DownloadState
 import com.serenade.app.feature.download.worker.DownloadWorker
@@ -29,6 +30,7 @@ class DownloadRepository @Inject constructor(
 
     suspend fun queueDownload(track: TrackEntity) {
         if (track.streamUrl.isNullOrBlank()) return
+        val resolvedUrl = track.streamUrl.resolveUrl()
 
         downloadDao.insert(
             DownloadEntity(
@@ -44,7 +46,7 @@ class DownloadRepository @Inject constructor(
             .setInputData(
                 workDataOf(
                     DownloadWorker.KEY_TRACK_ID to track.id,
-                    DownloadWorker.KEY_STREAM_URL to track.streamUrl,
+                    DownloadWorker.KEY_STREAM_URL to resolvedUrl,
                     DownloadWorker.KEY_TITLE to track.title,
                 )
             )
@@ -56,6 +58,11 @@ class DownloadRepository @Inject constructor(
             ExistingWorkPolicy.REPLACE,
             request,
         )
+    }
+
+    private fun String.resolveUrl(): String {
+        if (startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)) return this
+        return "${BuildConfig.API_BASE_URL.trimEnd('/')}/${trimStart('/')}"
     }
 
     suspend fun deleteDownload(trackId: String) {

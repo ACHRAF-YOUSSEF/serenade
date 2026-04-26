@@ -3,7 +3,6 @@ package com.serenade.app.feature.search.presentation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -17,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(
     onTrackClick: (TrackResponse, List<TrackResponse>) -> Unit,
@@ -25,7 +24,7 @@ fun SearchScreen(
     viewModel: SearchViewModel,
 ) {
     val query by viewModel.query.collectAsState()
-    val selectedGenre by viewModel.genre.collectAsState()
+    val selectedGenres by viewModel.genres.collectAsState()
     val results by viewModel.results.collectAsState()
     val error by viewModel.error.collectAsState()
 
@@ -56,13 +55,14 @@ fun SearchScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(Genre.entries) { g ->
+                Genre.entries.forEach { g ->
                     FilterChip(
-                        selected = selectedGenre == g.name,
+                        selected = g.name in selectedGenres,
                         onClick = { viewModel.onGenreToggle(g.name) },
                         label = { Text(g.name) },
                     )
