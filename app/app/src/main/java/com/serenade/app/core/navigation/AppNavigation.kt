@@ -202,6 +202,7 @@ fun AppNavigation(
                 PlayerScreen(
                     trackTitle = nowPlayingTrack?.title ?: "",
                     trackArtist = nowPlayingTrack?.artist ?: "",
+                    trackDurationMs = nowPlayingTrack?.durationMs ?: 0L,
                     onDismiss = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
                 )

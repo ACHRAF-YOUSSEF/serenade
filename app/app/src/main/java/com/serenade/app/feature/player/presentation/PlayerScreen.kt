@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 fun PlayerScreen(
     trackTitle: String,
     trackArtist: String,
+    trackDurationMs: Long,
     onDismiss: () -> Unit,
     viewModel: PlayerViewModel
 ) {
@@ -91,17 +92,18 @@ fun PlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            val durationKnown = state.durationMs > 0
+            val effectiveDurationMs = if (state.durationMs > 0) state.durationMs else trackDurationMs
+            val durationKnown = effectiveDurationMs > 0
             data class DragState(var progress: Float = 0f, var durationMs: Long = 0L)
             val drag = remember { DragState() }
             var isDragging by remember { mutableStateOf(false) }
             var dragDisplayProgress by remember { mutableFloatStateOf(0f) }
             val displayProgress = if (isDragging) dragDisplayProgress
-                else if (durationKnown) state.positionMs.toFloat() / state.durationMs else 0f
+                else if (durationKnown) state.positionMs.toFloat() / effectiveDurationMs else 0f
             Slider(
                 value = displayProgress,
                 onValueChange = {
-                    if (!isDragging) drag.durationMs = state.durationMs
+                    if (!isDragging) drag.durationMs = effectiveDurationMs
                     drag.progress = it
                     dragDisplayProgress = it
                     isDragging = true
@@ -121,7 +123,7 @@ fun PlayerScreen(
             ) {
                 Text(formatMs(state.positionMs), style = MaterialTheme.typography.labelSmall)
                 Text(
-                    text = if (durationKnown) formatMs(state.durationMs) else "--:--",
+                    text = if (durationKnown) formatMs(effectiveDurationMs) else "--:--",
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
