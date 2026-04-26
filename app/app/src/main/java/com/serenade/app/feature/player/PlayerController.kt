@@ -87,18 +87,9 @@ class PlayerController @Inject constructor(
         }
     }
 
-    fun stop() {
-        player.stop()
-        _state.value = PlaybackState()
-    }
-
     fun syncPosition() {
         if (_state.value.currentTrackId == null) return
         syncPlaybackState()
-    }
-
-    fun release() {
-        player.release()
     }
 
     private fun syncPlaybackState() {

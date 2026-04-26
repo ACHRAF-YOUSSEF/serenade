@@ -91,12 +91,13 @@ fun PlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            val durationKnown = state.durationMs > 0
             data class DragState(var progress: Float = 0f, var durationMs: Long = 0L)
             val drag = remember { DragState() }
             var isDragging by remember { mutableStateOf(false) }
             var dragDisplayProgress by remember { mutableFloatStateOf(0f) }
             val displayProgress = if (isDragging) dragDisplayProgress
-                else if (state.durationMs > 0) state.positionMs.toFloat() / state.durationMs else 0f
+                else if (durationKnown) state.positionMs.toFloat() / state.durationMs else 0f
             Slider(
                 value = displayProgress,
                 onValueChange = {
@@ -111,6 +112,7 @@ fun PlayerScreen(
                     }
                     isDragging = false
                 },
+                enabled = durationKnown,
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(
@@ -118,7 +120,10 @@ fun PlayerScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(formatMs(state.positionMs), style = MaterialTheme.typography.labelSmall)
-                Text(formatMs(state.durationMs), style = MaterialTheme.typography.labelSmall)
+                Text(
+                    text = if (durationKnown) formatMs(state.durationMs) else "--:--",
+                    style = MaterialTheme.typography.labelSmall,
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
