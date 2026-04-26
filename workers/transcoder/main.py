@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 QUEUE = "serenade.transcoder"
 
 
+MAX_RETRIES = 3
+RETRY_DELAYS_S = [5, 30, 120]
+
+
 async def handle_message(
     message: aio_pika.IncomingMessage, *, state: WorkerState
 ) -> None:
@@ -36,22 +40,45 @@ async def handle_message(
             await message.reject(requeue=False)
             return
 
-        async with message.process(requeue=False):
-            track_id = job.track_id
-            logger.info("Processing track %s", track_id)
+        retry_count = int(message.headers.get("x-retry-count", 0))
+        track_id = job.track_id
+        logger.info(
+            "Processing track %s (attempt %d/%d)", track_id, retry_count + 1, MAX_RETRIES + 1
+        )
 
-            try:
-                minio = get_minio()
-                stream_key, duration_ms = run_pipeline(
-                    track_id, job.raw_object_key, minio, settings.minio_bucket
+        try:
+            minio = get_minio()
+            stream_key, duration_ms = run_pipeline(
+                track_id, job.raw_object_key, minio, settings.minio_bucket
+            )
+            await _callback_ready(track_id, stream_key, duration_ms)
+            state.processed += 1
+            await message.ack()
+        except Exception:
+            state.errors += 1
+            logger.exception("Transcoding failed for track %s", track_id)
+            if retry_count < MAX_RETRIES:
+                delay = RETRY_DELAYS_S[retry_count]
+                logger.warning(
+                    "Retrying track %s in %ds (attempt %d/%d)",
+                    track_id, delay, retry_count + 1, MAX_RETRIES + 1,
                 )
-                await _callback_ready(track_id, stream_key, duration_ms)
-                state.processed += 1
-            except Exception:
-                logger.exception("Transcoding failed for track %s", track_id)
-                state.errors += 1
+                await asyncio.sleep(delay)
+                await state.channel.default_exchange.publish(
+                    aio_pika.Message(
+                        body=message.body,
+                        headers={**dict(message.headers), "x-retry-count": retry_count + 1},
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    ),
+                    routing_key=QUEUE,
+                )
+                await message.ack()
+            else:
+                logger.error(
+                    "Track %s failed after %d attempts, dead-lettering", track_id, MAX_RETRIES + 1
+                )
                 await _callback_failed(track_id)
-                raise
+                await message.reject(requeue=False)
     finally:
         reset_request_id(token)
 

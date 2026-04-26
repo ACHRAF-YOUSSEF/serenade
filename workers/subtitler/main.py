@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 QUEUE = "serenade.subtitler"
 
 
+MAX_RETRIES = 3
+RETRY_DELAYS_S = [5, 30, 120]
+
+
 async def handle_message(
     message: aio_pika.IncomingMessage, *, state: WorkerState
 ) -> None:
@@ -38,21 +42,46 @@ async def handle_message(
             await message.reject(requeue=False)
             return
 
-        async with message.process(requeue=False):
-            track_id = job.track_id
-            logger.info("Subtitler processing track %s", track_id)
-            try:
-                minio = get_minio()
-                with tempfile.TemporaryDirectory() as tmp:
-                    audio_path = str(Path(tmp) / "audio")
-                    minio.fget_object(settings.minio_bucket, job.raw_object_key, audio_path)
-                    lines = transcribe(audio_path, track_id, model_size=settings.whisper_model)
-                await _callback_subtitles(track_id, lines)
-                state.processed += 1
-            except Exception:
-                logger.exception("Subtitler failed for track %s", track_id)
-                state.errors += 1
-                raise
+        retry_count = int(message.headers.get("x-retry-count", 0))
+        track_id = job.track_id
+        logger.info(
+            "Subtitler processing track %s (attempt %d/%d)", track_id, retry_count + 1, MAX_RETRIES + 1
+        )
+
+        try:
+            minio = get_minio()
+            with tempfile.TemporaryDirectory() as tmp:
+                audio_path = str(Path(tmp) / "audio")
+                minio.fget_object(settings.minio_bucket, job.raw_object_key, audio_path)
+                lines = transcribe(audio_path, track_id, model_size=settings.whisper_model)
+            await _callback_subtitles(track_id, lines)
+            state.processed += 1
+            await message.ack()
+        except Exception:
+            state.errors += 1
+            logger.exception("Subtitler failed for track %s", track_id)
+            if retry_count < MAX_RETRIES:
+                delay = RETRY_DELAYS_S[retry_count]
+                logger.warning(
+                    "Retrying subtitler for track %s in %ds (attempt %d/%d)",
+                    track_id, delay, retry_count + 1, MAX_RETRIES + 1,
+                )
+                await asyncio.sleep(delay)
+                await state.channel.default_exchange.publish(
+                    aio_pika.Message(
+                        body=message.body,
+                        headers={**dict(message.headers), "x-retry-count": retry_count + 1},
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    ),
+                    routing_key=QUEUE,
+                )
+                await message.ack()
+            else:
+                logger.error(
+                    "Subtitler failed for track %s after %d attempts, dead-lettering",
+                    track_id, MAX_RETRIES + 1,
+                )
+                await message.reject(requeue=False)
     finally:
         reset_request_id(token)
 
