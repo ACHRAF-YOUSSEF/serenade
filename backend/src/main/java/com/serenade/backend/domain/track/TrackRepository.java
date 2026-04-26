@@ -20,7 +20,7 @@ public interface TrackRepository extends JpaRepository<Track, UUID> {
     @Query(value = """
             SELECT * FROM tracks
             WHERE status = 'READY'
-            AND (:genre IS NULL OR genre = :genre)
+            AND (:genres = '' OR genre = ANY(string_to_array(:genres, ',')))
             AND (:q = '' OR search_vector @@ plainto_tsquery('simple', :q))
             ORDER BY
                 CASE WHEN :q <> '' THEN ts_rank(search_vector, plainto_tsquery('simple', :q)) ELSE 0 END DESC,
@@ -29,9 +29,9 @@ public interface TrackRepository extends JpaRepository<Track, UUID> {
             countQuery = """
             SELECT count(*) FROM tracks
             WHERE status = 'READY'
-            AND (:genre IS NULL OR genre = :genre)
+            AND (:genres = '' OR genre = ANY(string_to_array(:genres, ',')))
             AND (:q = '' OR search_vector @@ plainto_tsquery('simple', :q))
             """,
             nativeQuery = true)
-    Page<Track> search(@Param("q") String q, @Param("genre") String genre, Pageable pageable);
+    Page<Track> search(@Param("q") String q, @Param("genres") String genres, Pageable pageable);
 }

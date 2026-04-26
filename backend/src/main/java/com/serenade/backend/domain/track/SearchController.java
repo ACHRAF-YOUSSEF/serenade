@@ -19,8 +19,8 @@ public class SearchController {
     @GetMapping
     public Page<TrackResponse> search(
             @RequestParam(defaultValue = "") String q,
-            @RequestParam(required = false) String genre,
+            @RequestParam(defaultValue = "") String genres,
             @PageableDefault(size = 20) Pageable pageable) {
-        return tracks.search(q, genre, pageable).map(TrackResponse::from);
+        return tracks.search(q, genres, pageable).map(TrackResponse::from);
     }
 }
