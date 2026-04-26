@@ -76,7 +76,17 @@ fun AppNavigation(
 
     fun playQueue(tracks: List<TrackEntity>, selected: TrackEntity): Boolean {
         val entries = tracks.mapNotNull { track ->
-            track.playbackUri()?.let { url -> track to PlaybackItem(track.id, url) }
+            track.playbackUri()?.let { url ->
+                track to PlaybackItem(
+                    trackId = track.id,
+                    streamUrl = url,
+                    title = track.title,
+                    artist = track.artist,
+                    album = track.album,
+                    durationMs = track.durationMs,
+                    artworkUrl = track.artworkUrl,
+                )
+            }
         }
         val startIndex = entries.indexOfFirst { it.first.id == selected.id }
         if (startIndex < 0) return false

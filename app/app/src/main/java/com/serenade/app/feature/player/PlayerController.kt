@@ -2,7 +2,9 @@ package com.serenade.app.feature.player
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -19,6 +21,11 @@ import javax.inject.Singleton
 data class PlaybackItem(
     val trackId: String,
     val streamUrl: String,
+    val title: String? = null,
+    val artist: String? = null,
+    val album: String? = null,
+    val durationMs: Long = 0L,
+    val artworkUrl: String? = null,
 )
 
 data class PlaybackState(
@@ -116,9 +123,20 @@ class PlayerController @Inject constructor(
 
     private fun PlaybackItem.toMediaItem(): MediaItem {
         val resolvedUrl = streamUrl.resolvePlaybackUrl()
+        val metadataBuilder = MediaMetadata.Builder()
+            .setTitle(title.takeUnless { it.isNullOrBlank() })
+            .setArtist(artist.takeUnless { it.isNullOrBlank() })
+            .setAlbumTitle(album.takeUnless { it.isNullOrBlank() })
+        if (durationMs > 0L) {
+            metadataBuilder.setDurationMs(durationMs)
+        }
+        artworkUrl?.takeUnless { it.isBlank() }?.let { artwork ->
+            metadataBuilder.setArtworkUri(Uri.parse(artwork.resolvePlaybackUrl()))
+        }
         val builder = MediaItem.Builder()
             .setMediaId(trackId)
             .setUri(resolvedUrl)
+            .setMediaMetadata(metadataBuilder.build())
         if (resolvedUrl.isHlsManifestUrl()) {
             builder.setMimeType(MimeTypes.APPLICATION_M3U8)
         }
