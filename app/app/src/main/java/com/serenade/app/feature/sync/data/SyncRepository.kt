@@ -64,8 +64,7 @@ class SyncRepository @Inject constructor(
         val response = api.getChanges(since = prefs.getString(KEY_CURSOR, INITIAL_CURSOR) ?: INITIAL_CURSOR)
 
         response.tracks.forEach { track ->
-            val existing = trackDao.getByIdOnce(track.id)
-            trackDao.insert(
+            trackDao.upsertFromRemote(
                 TrackEntity(
                     id = track.id,
                     remoteId = track.id,
@@ -75,10 +74,10 @@ class SyncRepository @Inject constructor(
                     genre = runCatching { Genre.valueOf(track.genre) }.getOrDefault(Genre.OTHER),
                     durationMs = track.durationMs ?: 0L,
                     artworkUrl = track.artworkUrl,
-                    localPath = existing?.localPath,
+                    localPath = null,
                     streamUrl = track.streamUrl,
                     streamUrlExpiresAt = null,
-                    isDownloaded = existing?.isDownloaded ?: false,
+                    isDownloaded = false,
                     providerId = "serenade",
                     updatedAt = track.updatedAt?.let(Instant::parse) ?: Instant.now(),
                 )

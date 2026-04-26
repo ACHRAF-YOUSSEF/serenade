@@ -4,43 +4,60 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface TrackDao {
+abstract class TrackDao {
     @Query("SELECT * FROM tracks ORDER BY title ASC")
-    fun getAll(): Flow<List<TrackEntity>>
+    abstract fun getAll(): Flow<List<TrackEntity>>
 
     @Query("SELECT * FROM tracks WHERE id = :id")
-    fun getById(id: String): Flow<TrackEntity?>
+    abstract fun getById(id: String): Flow<TrackEntity?>
 
     @Query("SELECT * FROM tracks WHERE id = :id")
-    suspend fun getByIdOnce(id: String): TrackEntity?
+    abstract suspend fun getByIdOnce(id: String): TrackEntity?
 
     @Query("SELECT * FROM tracks WHERE genre = :genre ORDER BY title ASC")
-    fun getByGenre(genre: Genre): Flow<List<TrackEntity>>
+    abstract fun getByGenre(genre: Genre): Flow<List<TrackEntity>>
 
     @Query("SELECT * FROM tracks WHERE isDownloaded = 1")
-    fun getDownloaded(): Flow<List<TrackEntity>>
+    abstract fun getDownloaded(): Flow<List<TrackEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(track: TrackEntity)
+    abstract suspend fun insert(track: TrackEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(tracks: List<TrackEntity>)
+    abstract suspend fun insertAll(tracks: List<TrackEntity>)
 
     @Update
-    suspend fun update(track: TrackEntity)
+    abstract suspend fun update(track: TrackEntity)
 
     @Query("UPDATE tracks SET localPath = :localPath, isDownloaded = :isDownloaded WHERE id = :id")
-    suspend fun updateDownloadState(id: String, localPath: String?, isDownloaded: Boolean)
+    abstract suspend fun updateDownloadState(id: String, localPath: String?, isDownloaded: Boolean)
 
     @Query("DELETE FROM tracks WHERE id = :id")
-    suspend fun deleteById(id: String)
+    abstract suspend fun deleteById(id: String)
 
     @Query("SELECT * FROM tracks WHERE id IN (:ids)")
-    suspend fun getByIds(ids: List<String>): List<TrackEntity>
+    abstract suspend fun getByIds(ids: List<String>): List<TrackEntity>
+
+    @Transaction
+    open suspend fun upsertFromRemote(track: TrackEntity) {
+        val existing = getByIdOnce(track.id)
+        insert(
+            track.copy(
+                localPath = existing?.localPath,
+                isDownloaded = existing?.isDownloaded ?: false,
+            )
+        )
+    }
+
+    @Transaction
+    open suspend fun upsertAllFromRemote(tracks: List<TrackEntity>) {
+        tracks.forEach { upsertFromRemote(it) }
+    }
 }

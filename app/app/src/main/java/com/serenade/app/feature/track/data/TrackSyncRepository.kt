@@ -17,14 +17,7 @@ class TrackSyncRepository @Inject constructor(
 
     suspend fun sync() {
         val page = api.getTracks()
-
-        val remoteIds = page.content.map { it.id }
-
-        val existingTracks = dao.getByIds(remoteIds).associateBy { it.id }
-
         val entities = page.content.map { r ->
-            val existing = existingTracks[r.id]
-
             TrackEntity(
                 id = r.id,
                 remoteId = r.id,
@@ -34,14 +27,14 @@ class TrackSyncRepository @Inject constructor(
                 genre = runCatching { Genre.valueOf(r.genre) }.getOrDefault(Genre.OTHER),
                 durationMs = r.durationMs ?: 0L,
                 artworkUrl = r.artworkUrl,
-                localPath = existing?.localPath,
-                isDownloaded = existing?.isDownloaded ?: false,
+                localPath = null,
+                isDownloaded = false,
                 streamUrl = r.streamUrl,
                 streamUrlExpiresAt = null,
                 providerId = "serenade",
                 updatedAt = Instant.now(),
             )
         }
-        dao.insertAll(entities)
+        dao.upsertAllFromRemote(entities)
     }
 }
