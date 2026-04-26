@@ -1,0 +1,67 @@
+# Progress
+
+## Works
+- Android project: Compose, Room entities, DAOs, converters, database wiring, all builds.
+- Backend B1: Spring Boot packaged, Flyway V1__init.sql applied, `/actuator/health` UP.
+- Backend B2: JWT auth, Spring Security stateless, BCrypt, alg:none rejected.
+- Backend B3: Track JPA entity + paginated GET endpoints.
+- Mobile M2: Retrofit + OkHttp DI, auth flow (login + register screens).
+- Mobile M3: ExoPlayer singleton, PlayerController StateFlow, SerenadePlayerService.
+- Backend B4: MinIO upload, RabbitMQ publish, POST /api/tracks/upload.
+- Mobile M4: Track list sync, TrackListScreen, MiniPlayerBar.
+- Backend B5: /internal/tracks/{id}/ready|failed (X-Api-Key), Python transcoder worker (aio-pika + Pydantic message validation + FFmpeg HLS + MinIO + SpringClient callback).
+- Mobile M5: PlayerScreen (seek bar, artwork placeholder, play/pause), full-screen nav route, mini player tap navigates to player.
+- Backend B6: SubtitleLine entity, SubtitleLineRepository, GET /api/tracks/{id}/subtitles, POST /internal/tracks/{id}/subtitles (X-Api-Key bulk push), subtitler queue added to RabbitConfig.
+- Workers B6: subtitler worker — aio-pika consumer → Pydantic message validation → MinIO download → faster-whisper transcribe → SpringClient POST to /internal/tracks/{id}/subtitles.
+- Mobile M6: SubtitleApiService, SubtitleRepository, PlayerViewModel currentCue StateFlow, PlayerScreen AnimatedVisibility cue text below seek bar.
+- Backend B7: GET /api/search?q=&genre=&page=&size= — plainto_tsquery on search_vector + GIN index, ts_rank ordering.
+- Mobile M7: SearchApiService, SearchViewModel (300ms debounce + flatMapLatest, genre toggle), SearchScreen (inline TextField TopAppBar + genre FilterChips + results list), ROUTE_SEARCH in AppNavigation.
+- Mobile build: Hilt Retrofit providers now include PlaylistApiService and RatingApiService.
+- Backend playlists/ratings: playlist CRUD/copy/set-tracks endpoints, Rating upsert, owner checks, duplicate track/position rejection, rating target validation, Redis average cache best-effort.
+- Mobile playlists/ratings: LibraryScreen, create playlist dialog, PlaylistDetailScreen with tracks, copy action, star rating, average rating, and playback from playlist tracks.
+- Mobile downloads/offline: DownloadRepository + Hilt DownloadWorker, WorkManager enqueue/delete flow, app-private file storage, Room progress/state updates, downloaded track list, row download/delete controls, completion notification, localPath preserved during sync, player source resolver prefers local files.
+- Backend sync: GET /api/changes supports cursor pull for updated READY tracks, owned playlists, and user ratings.
+- Mobile sync: ChangesApiService, SyncRepository, Hilt SyncWorker, periodic network sync scheduling, cursor persistence, Room upserts for tracks/playlists/ratings, and outbox flush for all op types.
+- Mobile outbox-backed mutations: PlaylistRepository writes Room first and queues PendingOpEntity for create/copy/add-track/remove-track/reorder; RatingRepository writes local rating state and queues PendingOpEntity for track/playlist ratings.
+- Security hardening: Android debug OkHttp logs redact Authorization, backend JWT/internal API key defaults removed from YAML, SecurityConfig fails fast without INTERNAL_API_KEY.
+- Backend upload status: GET /api/uploads/{trackId} returns uploader-scoped PROCESSING/READY/FAILED state.
+- Mobile upload phase: UploadScreen, SAF audio picker, metadata form, multipart upload progress, and status polling until READY/FAILED.
+- Workers admin API: WorkerState dataclass, create_admin_app() FastAPI app per worker with GET /health, GET /metrics, POST /admin/reprocess/{track_id}.
+- Backend security headers: X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: no-referrer, Content-Security-Policy: default-src 'none'.
+- Playlist track management: addTrack/removeTrack with optimistic Room update + PendingOp + remote setTracks. PlaylistDetailScreen shows delete button and FAB bottom-sheet picker.
+- Outbox sync: SyncRepository flushes all PendingOpTypes including ADD/REMOVE/REORDER_PLAYLIST_TRACKS and UPLOAD_TRACK.
+
+- Backend B8: RateLimitFilter (bucket4j in-memory, 10 RPM auth / 60 RPM api, per IP, HTTP 429 on breach). CorsConfigurationSource bean added to SecurityConfig. RabbitConfig extended with serenade.dead-letter DirectExchange + DLQ queues for transcoder and subtitler.
+- Mobile M8: RatingDao.getByTargetOnce added. PlaylistDetailViewModel myRating bug fixed — loaded from Room on init. Playlist drag-reorder: moveTrackUp/moveTrackDown with optimistic state update + REORDER_PLAYLIST_TRACKS PendingOp. PlaylistDetailScreen up/down arrow buttons per track row. Offline upload outbox: UploadRepository.isNetworkAvailable() + queueUpload() writes UPLOAD_TRACK PendingOp and copies file to pending_uploads/. UploadViewModel falls back to queue when offline. SyncRepository handles REORDER_PLAYLIST_TRACKS + UPLOAD_TRACK ops; else branch no longer throws.
+- Post-B8/M8 polish: Media3 integrated in PlayerModule (ExoPlayer replaced by Media3 ExoPlayer); TokenRefreshAuthenticator logic improved (cleaner 401 interception, avoids refresh loops); password visibility toggle added to LoginScreen and RegisterScreen; SecurityConfig updated to allow public access to HLS streaming endpoints and error endpoints (no JWT required for stream delivery).
+- Backend B9/DLQ hardening: main RabbitMQ worker queues now declare dead-letter exchange/routing keys, workers NACK processing failures without requeue so failed jobs route to DLQ, RateLimitFilter has endpoint-specific login/register/auth/API policies plus `Retry-After`, forwarded IPs are trusted only from configured proxy IPs, CORS uses YAML allow-list, BCrypt strength is 12, Swagger/OpenAPI requires auth, HSTS is enabled, and MinIO presigned expiry clamps to 1–15 minutes.
+- Backend B10 observability: RequestIdFilter accepts/sanitizes `X-Request-Id`, generates one when absent, writes MDC, returns the header, and logs request completion metadata. Upload RabbitMQ messages carry `X-Request-Id`; workers read request IDs from RabbitMQ headers, include them in JSON logs, and forward them on Spring internal callbacks. Backend console logs use Spring Boot logstash JSON. Actuator exposes `metrics` and `prometheus` endpoints behind normal auth, with Micrometer application tags and HTTP server histograms.
+- Mobile offline/security hardening: DownloadWorker now stores full HLS packages for `.m3u8` stream URLs by downloading the manifest and media segments into app-private storage, rewriting segment references to local files, and cleaning partial files on failure. Android backup/data extraction XML excludes all app data, app-wide cleartext was removed from the manifest, and cleartext is scoped to emulator/local/LAN development hosts only.
+- Mobile queue playback: PlayerController supports Media3 queues, next/previous controls, queue index/size state, relative/file/content URL resolution, and HLS MIME selection only for `.m3u8`. PlayerScreen skip buttons are enabled from playback state. Search and playlist detail taps enqueue the visible result/playlist list, and AppNavigation keeps current title/artist in sync with Media3 item transitions. Stream URLs are no longer logged by PlayerController.
+- Mobile persisted playback: Room stores the active playback queue and recently played history. PlayerController saves new queues, restores the latest queue on app startup without autoplay, persists current item/position, and records history when playback advances. Player UI falls back to Media3 metadata after process restore.
+- Mobile persisted playback migration fix: AppDatabase 1->2 migration now recreates the new playback tables with `Instant` columns as `INTEGER`, matching Room's schema and preventing launch crash during upgrade from DB v1.
+- Collaboration docs tracking: `.gitignore` now allows shared markdown plans/progress, `memory-bank`, `.github/instructions`, and `.claude` commands/skills to be committed while keeping `.claude/settings.local.json` ignored.
+- Mobile connectivity: `BuildConfig.API_BASE_URL` is configurable through `SERENADE_API_BASE_URL` Gradle property or environment variable and defaults to `http://10.0.2.2:8080/` for emulator builds instead of a stale LAN IP.
+- Mobile page response decode: `PageResponse` tolerates backend page JSON that includes `content` but omits root `totalElements`, `totalPages`, or `last`, fixing the search decode error shown on-device.
+- Mobile playback keepalive: PlayerController starts the Media3 `SerenadePlayerService` before play/resume/skip, PlayerModule enables network wake mode plus media audio focus/noisy-device handling, and SerenadePlayerService no longer releases the app-scoped ExoPlayer when the service is destroyed.
+- Mobile media notification: SerenadePlayerService starts foreground immediately to avoid Android's `ForegroundServiceDidNotStartInTimeException`, but the anchor notification now uses a white music-note notification icon, Media3 media style, and `player.mediaMetadata` instead of the launcher icon/app-name placeholder. PlaybackItem metadata carries title/artist/album/duration/artwork into system media controls, and the service refreshes the visible foreground notification plus Media3 provider notification on item/metadata/playback/timeline changes so next/previous controls update displayed info.
+- Mobile foreground service hardening: `SerenadePlayerService` also calls `ensureForeground()` in `onCreate()` before Media3 provider/session setup, preventing track-tap launches from timing out before `startForeground()`.
+- Stable artwork display: Backend now serves uploaded artwork through `GET /artwork/{trackId}` by deriving the safe MinIO `artwork/{uuid}.{ext}` key from the stored value and streaming it with image media type. Android maps nonblank `artworkUrl` markers to `${BuildConfig.API_BASE_URL}/artwork/{trackId}` during sync/search entity conversion, avoiding expired/direct MinIO presigned URLs in Coil.
+- HLS seekability: Backend HLS proxy normalizes served manifests to explicit VOD playlists with `#EXT-X-PLAYLIST-TYPE:VOD` and `#EXT-X-ENDLIST`, and returns exact `Content-Length` for normalized manifests. Transcoder generates new HLS output as audio-only VOD via FFmpeg `-map 0:a:0`, `-vn`, and `-hls_playlist_type vod`.
+
+- TASK029 artwork + retry + fixes: Backend `POST /api/tracks/upload` accepts optional `artwork` multipart field (JPEG/PNG/WEBP ≤5 MB); validates, stores at `artwork/{trackId}.{ext}` in MinIO, saves presigned URL to `Track.artworkUrl`. Workers (transcoder + subtitler) retry up to 3 times with exponential backoff (5s/30s/120s) by ACKing + republishing with `x-retry-count` header before dead-lettering. `SyncRepository.flushPendingOps` now logs and skips failing ops instead of halting the queue; UPLOAD_TRACK logs warning when local file is missing. `TrackListScreen` passes full track list to `onTrackClick` so `AppNavigation` enqueues the full library on home-screen track tap. Mobile `UploadScreen` has an optional artwork image picker card (`GetContent` / `image/*`); `UploadViewModel` holds `artworkUri` and `selectArtwork()`; `UploadRepository` builds artwork multipart part and passes to API.
+
+- TASK030 artwork display + Redis rate limiting + upload UX: PlayerScreen, MiniPlayerBar, TrackListScreen, and UploadScreen all use Coil `AsyncImage` — artwork shown where available, MusicNote icon fallback where not. UploadScreen `ArtworkPickerCard` shows a 40dp thumbnail immediately after selection. `SyncRepository` posts a system notification ("Upload failed — file no longer available") when a queued UPLOAD_TRACK op's local file is missing at flush time. `RateLimitFilter` now uses `ReactiveStringRedisTemplate` with a Lua INCR+PEXPIRE script per windowed key; falls back to local bucket4j buckets on Redis errors; sets `X-Rate-Limit-Remaining` on allowed responses and `Retry-After` on 429s.
+
+## In Progress
+
+## Known Issues
+- Android module layout still flat inside `:app` (no `:core:*` / `:feature:*` split).
+- No tests written per user instruction.
+- `mvnw spring-boot:run` may fail in sandbox; use packaged jar.
+- `BuildConfig.API_BASE_URL` defaults to `http://10.0.2.2:8080/` for emulator; build with `SERENADE_API_BASE_URL=http://<host-lan-ip>:8080/` for physical devices.
+- Network security config allows cleartext to 10.0.2.2, localhost, and the configured LAN development host only; HTTPS enforced elsewhere.
+- Workers shared/ uses relative sys.path insert — acceptable for dev; use proper package install in prod.
+- Redis rate limit uses fixed sliding windows (INCR+PEXPIRE), not a true token bucket; acceptable for single-instance.
+- Artwork presigned URLs expire in ≤15 min; refresh via periodic sync.
+- RabbitMQ DLQ queues are new — existing RabbitMQ instances need queue delete + redeclare to pick up new x-dead-letter-exchange argument.
