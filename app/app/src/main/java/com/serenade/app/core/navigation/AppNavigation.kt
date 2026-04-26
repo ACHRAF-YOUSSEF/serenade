@@ -109,9 +109,9 @@ fun AppNavigation(
         bottomBar = {
             MiniPlayerBar(
                 state = playbackState,
-                trackTitle = nowPlayingTrack?.title,
-                trackArtist = nowPlayingTrack?.artist,
-                artworkUrl = nowPlayingTrack?.artworkUrl,
+                trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle,
+                trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist,
+                artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
                 onTogglePlayPause = playerController::togglePlayPause,
                 onBarClick = {
                     if (playbackState.currentTrackId != null) {
@@ -212,10 +212,10 @@ fun AppNavigation(
             }
             composable(ROUTE_PLAYER) {
                 PlayerScreen(
-                    trackTitle = nowPlayingTrack?.title ?: "",
-                    trackArtist = nowPlayingTrack?.artist ?: "",
-                    trackDurationMs = nowPlayingTrack?.durationMs ?: 0L,
-                    artworkUrl = nowPlayingTrack?.artworkUrl,
+                    trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle ?: "",
+                    trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist ?: "",
+                    trackDurationMs = nowPlayingTrack?.durationMs ?: playbackState.durationMs,
+                    artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
                     onDismiss = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
                 )

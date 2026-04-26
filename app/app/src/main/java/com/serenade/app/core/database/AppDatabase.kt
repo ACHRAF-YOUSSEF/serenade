@@ -7,6 +7,9 @@ import com.serenade.app.feature.auth.data.UserDao
 import com.serenade.app.feature.auth.data.entity.UserEntity
 import com.serenade.app.feature.download.data.DownloadDao
 import com.serenade.app.feature.download.data.entity.DownloadEntity
+import com.serenade.app.feature.player.data.PlaybackDao
+import com.serenade.app.feature.player.data.entity.PlaybackHistoryEntity
+import com.serenade.app.feature.player.data.entity.PlaybackQueueEntity
 import com.serenade.app.feature.playlist.data.PlaylistDao
 import com.serenade.app.feature.playlist.data.entity.PlaylistEntity
 import com.serenade.app.feature.playlist.data.entity.PlaylistTrackCrossRef
@@ -32,8 +35,10 @@ import com.serenade.app.feature.track.data.entity.TrackEntity
         PendingOpEntity::class,
         ProviderEntity::class,
         RatingEntity::class,
+        PlaybackQueueEntity::class,
+        PlaybackHistoryEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(AppConverters::class)
@@ -46,6 +51,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pendingOpDao(): PendingOpDao
     abstract fun providerDao(): ProviderDao
     abstract fun ratingDao(): RatingDao
+    abstract fun playbackDao(): PlaybackDao
 
     companion object {
         const val DATABASE_NAME = "serenade.db"
