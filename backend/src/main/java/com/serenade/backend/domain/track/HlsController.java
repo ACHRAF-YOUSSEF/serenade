@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.InputStream;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -42,17 +41,20 @@ public class HlsController {
         }
 
         String objectKey = "hls/%s/%s".formatted(trackId, fileName);
-        InputStream stream;
+        MinioService.ObjectData obj;
         try {
-            stream = minio.getObject(objectKey);
+            obj = minio.getObject(objectKey);
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "HLS file not found", e);
         }
 
         MediaType mediaType = fileName.endsWith(".m3u8") ? HLS_MEDIA_TYPE : TS_MEDIA_TYPE;
-        return ResponseEntity.ok()
+        var builder = ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
-                .contentType(mediaType)
-                .body(new InputStreamResource(stream));
+                .contentType(mediaType);
+        if (obj.size() >= 0) {
+            builder = builder.contentLength(obj.size());
+        }
+        return builder.body(new InputStreamResource(obj.stream()));
     }
 }

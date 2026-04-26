@@ -54,12 +54,17 @@ public class MinioService {
         }
     }
 
-    public InputStream getObject(String objectKey) {
+    public record ObjectData(InputStream stream, long size) {}
+
+    public ObjectData getObject(String objectKey) {
         try {
-            return minio.getObject(GetObjectArgs.builder()
+            var response = minio.getObject(GetObjectArgs.builder()
                     .bucket(props.minio().bucket())
                     .object(objectKey)
                     .build());
+            String cl = response.headers().get("Content-Length");
+            long size = cl != null ? Long.parseLong(cl) : -1L;
+            return new ObjectData(response, size);
         } catch (Exception e) {
             throw new RuntimeException("MinIO object read failed: " + e.getMessage(), e);
         }
