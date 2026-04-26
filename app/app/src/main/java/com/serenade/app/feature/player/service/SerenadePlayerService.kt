@@ -8,8 +8,6 @@ import android.os.Build
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -30,18 +28,16 @@ class SerenadePlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private val notificationRefreshListener = object : Player.Listener {
         @OptIn(UnstableApi::class)
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            triggerNotificationUpdate()
-        }
-
-        @OptIn(UnstableApi::class)
-        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            triggerNotificationUpdate()
-        }
-
-        @OptIn(UnstableApi::class)
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            triggerNotificationUpdate()
+        override fun onEvents(player: Player, events: Player.Events) {
+            if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION) ||
+                events.contains(Player.EVENT_MEDIA_METADATA_CHANGED) ||
+                events.contains(Player.EVENT_IS_PLAYING_CHANGED) ||
+                events.contains(Player.EVENT_PLAYBACK_STATE_CHANGED) ||
+                events.contains(Player.EVENT_TIMELINE_CHANGED)
+            ) {
+                ensureForeground()
+                triggerNotificationUpdate()
+            }
         }
     }
 
@@ -86,11 +82,11 @@ class SerenadePlayerService : MediaSessionService() {
             )
         }
 
-        val metadata = player.currentMediaItem?.mediaMetadata
+        val metadata = player.mediaMetadata
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_music)
-            .setContentTitle(metadata?.title ?: getString(R.string.app_name))
-            .setContentText(metadata?.artist)
+            .setContentTitle(metadata.title ?: getString(R.string.app_name))
+            .setContentText(metadata.artist)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setOngoing(player.isPlaying)
             .setSilent(true)
