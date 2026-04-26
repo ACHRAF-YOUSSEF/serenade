@@ -12,13 +12,15 @@ from pydantic import ValidationError
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.admin_api import WorkerState, create_admin_app
+from shared.logging import configure_json_logging
+from shared.request_context import request_id_from_headers, reset_request_id, set_request_id
 from shared.settings import settings
 from shared.minio_client import get_minio
 from shared.models import TrackUploadedMessage
 from shared.spring_client import SpringClient
 from whisper_pipeline import transcribe
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+configure_json_logging()
 logger = logging.getLogger(__name__)
 
 QUEUE = "serenade.subtitler"
@@ -27,28 +29,32 @@ QUEUE = "serenade.subtitler"
 async def handle_message(
     message: aio_pika.IncomingMessage, *, state: WorkerState
 ) -> None:
+    token = set_request_id(request_id_from_headers(message.headers))
     try:
-        job = TrackUploadedMessage.model_validate_json(message.body)
-    except ValidationError as exc:
-        logger.warning("Rejecting malformed subtitle message: %s", exc.errors()[0]["type"])
-        await message.reject(requeue=False)
-        return
-
-    async with message.process(requeue=False):
-        track_id = job.track_id
-        logger.info("Subtitler processing track %s", track_id)
         try:
-            minio = get_minio()
-            with tempfile.TemporaryDirectory() as tmp:
-                audio_path = str(Path(tmp) / "audio")
-                minio.fget_object(settings.minio_bucket, job.raw_object_key, audio_path)
-                lines = transcribe(audio_path, track_id, model_size=settings.whisper_model)
-            await _callback_subtitles(track_id, lines)
-            state.processed += 1
-        except Exception:
-            logger.exception("Subtitler failed for track %s", track_id)
-            state.errors += 1
-            raise
+            job = TrackUploadedMessage.model_validate_json(message.body)
+        except ValidationError as exc:
+            logger.warning("Rejecting malformed subtitle message: %s", exc.errors()[0]["type"])
+            await message.reject(requeue=False)
+            return
+
+        async with message.process(requeue=False):
+            track_id = job.track_id
+            logger.info("Subtitler processing track %s", track_id)
+            try:
+                minio = get_minio()
+                with tempfile.TemporaryDirectory() as tmp:
+                    audio_path = str(Path(tmp) / "audio")
+                    minio.fget_object(settings.minio_bucket, job.raw_object_key, audio_path)
+                    lines = transcribe(audio_path, track_id, model_size=settings.whisper_model)
+                await _callback_subtitles(track_id, lines)
+                state.processed += 1
+            except Exception:
+                logger.exception("Subtitler failed for track %s", track_id)
+                state.errors += 1
+                raise
+    finally:
+        reset_request_id(token)
 
 
 async def _callback_subtitles(track_id: str, lines: list[dict]) -> None:

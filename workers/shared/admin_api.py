@@ -8,6 +8,7 @@ import aio_pika
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 
 from .models import TrackUploadedMessage
+from .request_context import REQUEST_ID_HEADER, normalize_request_id
 from .settings import settings
 
 logger = logging.getLogger(__name__)
@@ -46,13 +47,17 @@ def create_admin_app(state: WorkerState) -> FastAPI:
         status_code=202,
         dependencies=[Depends(_require_api_key)],
     )
-    async def reprocess(track_id: str) -> dict[str, Any]:
+    async def reprocess(track_id: str, request: Request) -> dict[str, Any]:
         if state.channel is None:
             raise HTTPException(status_code=503, detail="RabbitMQ channel not ready")
         try:
             msg = TrackUploadedMessage(trackId=track_id)
+            request_id = normalize_request_id(request.headers.get(REQUEST_ID_HEADER))
             await state.channel.default_exchange.publish(
-                aio_pika.Message(body=msg.model_dump_json().encode()),
+                aio_pika.Message(
+                    body=msg.model_dump_json().encode(),
+                    headers={REQUEST_ID_HEADER: request_id} if request_id else None,
+                ),
                 routing_key=state.queue,
             )
         except Exception as exc:
