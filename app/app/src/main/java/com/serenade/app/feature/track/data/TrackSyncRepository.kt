@@ -26,7 +26,7 @@ class TrackSyncRepository @Inject constructor(
                 album = r.album ?: "",
                 genre = runCatching { Genre.valueOf(r.genre) }.getOrDefault(Genre.OTHER),
                 durationMs = r.durationMs ?: 0L,
-                artworkUrl = r.artworkUrl,
+                artworkUrl = stableArtworkUrl(r.id, r.artworkUrl),
                 localPath = null,
                 isDownloaded = false,
                 streamUrl = r.streamUrl,

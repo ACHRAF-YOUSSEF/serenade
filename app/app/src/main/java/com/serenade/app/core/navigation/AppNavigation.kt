@@ -21,6 +21,7 @@ import com.serenade.app.feature.player.presentation.PlayerScreen
 import com.serenade.app.feature.playlist.presentation.LibraryScreen
 import com.serenade.app.feature.playlist.presentation.PlaylistDetailScreen
 import com.serenade.app.feature.search.presentation.SearchScreen
+import com.serenade.app.feature.track.data.stableArtworkUrl
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
@@ -36,7 +37,7 @@ private fun TrackResponse.toEntity() = TrackEntity(
     album = album ?: "",
     genre = runCatching { Genre.valueOf(genre) }.getOrDefault(Genre.OTHER),
     durationMs = durationMs ?: 0L,
-    artworkUrl = artworkUrl,
+    artworkUrl = stableArtworkUrl(id, artworkUrl),
     localPath = null,
     streamUrl = streamUrl,
     streamUrlExpiresAt = null,
