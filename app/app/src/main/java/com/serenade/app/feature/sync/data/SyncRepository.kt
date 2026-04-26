@@ -209,7 +209,7 @@ class SyncRepository @Inject constructor(
                 val file = File(payload.localFilePath)
                 if (!file.exists()) {
                     android.util.Log.w(TAG, "Upload file missing for queued op ${op.id}, discarding: ${payload.localFilePath}")
-                    notifyUploadFileMissing(payload.title)
+                    notifyUploadFileMissing(payload.title, payload.artist)
                     return
                 }
                 val textPlain = "text/plain".toMediaType()
@@ -231,10 +231,10 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    private fun notifyUploadFileMissing(trackTitle: String) {
+    private fun notifyUploadFileMissing(trackTitle: String, artist: String) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
-            NotificationChannel(UPLOAD_CHANNEL_ID, "Uploads", NotificationManager.IMPORTANCE_DEFAULT)
+            NotificationChannel(UPLOAD_CHANNEL_ID, "Uploads", NotificationManager.IMPORTANCE_HIGH)
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -242,8 +242,17 @@ class SyncRepository @Inject constructor(
         ) return
         val notification = NotificationCompat.Builder(context, UPLOAD_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
-            .setContentTitle("Upload failed")
-            .setContentText("\"$trackTitle\" — file no longer available")
+            .setContentTitle(trackTitle)
+            .setContentText(artist)
+            .setSubText("Upload failed")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(artist)
+                    .setSummaryText("File no longer available — please re-upload")
+            )
+            .setColor(0xFFB00020.toInt())
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ERROR)
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify(trackTitle.hashCode(), notification)
