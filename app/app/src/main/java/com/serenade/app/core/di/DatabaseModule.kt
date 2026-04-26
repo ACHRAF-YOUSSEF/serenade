@@ -72,6 +72,8 @@ object DatabaseModule {
 
     private val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `playback_queue`")
+            db.execSQL("DROP TABLE IF EXISTS `playback_history`")
             db.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS `playback_queue` (
