@@ -91,16 +91,22 @@ fun PlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Seek bar
             var dragProgress by remember { mutableFloatStateOf(0f) }
+            var dragDurationMs by remember { mutableLongStateOf(0L) }
             var isDragging by remember { mutableStateOf(false) }
             val displayProgress = if (isDragging) dragProgress
                 else if (state.durationMs > 0) state.positionMs.toFloat() / state.durationMs else 0f
             Slider(
                 value = displayProgress,
-                onValueChange = { isDragging = true; dragProgress = it },
+                onValueChange = {
+                    if (!isDragging) dragDurationMs = state.durationMs
+                    isDragging = true
+                    dragProgress = it
+                },
                 onValueChangeFinished = {
-                    viewModel.seekTo((dragProgress * state.durationMs).toLong())
+                    if (dragDurationMs > 0) {
+                        viewModel.seekTo((dragProgress * dragDurationMs).toLong())
+                    }
                     isDragging = false
                 },
                 modifier = Modifier.fillMaxWidth(),
