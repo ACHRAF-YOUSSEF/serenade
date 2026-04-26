@@ -139,8 +139,8 @@ fun AppNavigation(
             }
             composable(ROUTE_HOME) {
                 TrackListScreen(
-                    onTrackClick = { track ->
-                        playQueue(listOf(track), track)
+                    onTrackClick = { track, allTracks ->
+                        playQueue(allTracks, track)
                     },
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },

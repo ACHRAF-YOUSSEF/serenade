@@ -75,6 +75,7 @@ class UploadRepository @Inject constructor(
         artist: String,
         album: String,
         genre: Genre,
+        artworkUri: Uri?,
         onProgress: (bytesWritten: Long, contentLength: Long) -> Unit,
     ): UploadResponse {
         val info = inspect(uri)
@@ -91,13 +92,26 @@ class UploadRepository @Inject constructor(
             contentLength = info.sizeBytes ?: -1L,
             onProgress = onProgress,
         )
-        val part = MultipartBody.Part.createFormData("file", info.name, body)
+        val filePart = MultipartBody.Part.createFormData("file", info.name, body)
+        val artworkPart = artworkUri?.let { aUri ->
+            val aInfo = inspect(aUri)
+            val aMime = (aInfo.contentType ?: "image/jpeg").toMediaType()
+            val aBody = ContentUriRequestBody(
+                resolver = context.contentResolver,
+                uri = aUri,
+                mediaType = aMime,
+                contentLength = aInfo.sizeBytes ?: -1L,
+                onProgress = { _, _ -> },
+            )
+            MultipartBody.Part.createFormData("artwork", aInfo.name, aBody)
+        }
         return api.uploadTrack(
             title = title.trim().toRequestBody(textPlain),
             artist = artist.trim().toRequestBody(textPlain),
             album = album.trim().takeIf { it.isNotBlank() }?.toRequestBody(textPlain),
             genre = genre.name.toRequestBody(textPlain),
-            file = part,
+            file = filePart,
+            artwork = artworkPart,
         )
     }
 

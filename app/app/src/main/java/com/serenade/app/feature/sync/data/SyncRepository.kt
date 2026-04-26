@@ -138,8 +138,11 @@ class SyncRepository @Inject constructor(
 
     private suspend fun flushPendingOps() {
         for (op in pendingOpDao.getPendingList()) {
-            val applied = runCatching { applyPendingOp(op) }.isSuccess
-            if (!applied) return
+            val result = runCatching { applyPendingOp(op) }
+            if (result.isFailure) {
+                android.util.Log.w(TAG, "Pending op ${op.type}/${op.id} failed, skipping: ${result.exceptionOrNull()?.message}")
+                continue
+            }
             pendingOpDao.deleteById(op.id)
         }
     }
@@ -196,7 +199,10 @@ class SyncRepository @Inject constructor(
             PendingOpType.UPLOAD_TRACK -> {
                 val payload = PendingOpJson.decodeFromString<UploadTrackOpPayload>(op.payloadJson)
                 val file = File(payload.localFilePath)
-                if (!file.exists()) return
+                if (!file.exists()) {
+                    android.util.Log.w(TAG, "Upload file missing for queued op ${op.id}, discarding: ${payload.localFilePath}")
+                    return
+                }
                 val textPlain = "text/plain".toMediaType()
                 val filePart = MultipartBody.Part.createFormData(
                     "file", file.name, file.asRequestBody("audio/*".toMediaType())
@@ -207,6 +213,7 @@ class SyncRepository @Inject constructor(
                     album = payload.album.takeIf { it.isNotBlank() }?.toRequestBody(textPlain),
                     genre = payload.genre.toRequestBody(textPlain),
                     file = filePart,
+                    artwork = null,
                 )
                 file.delete()
             }
@@ -238,6 +245,7 @@ class SyncRepository @Inject constructor(
         )
 
     private companion object {
+        const val TAG = "SyncRepository"
         const val PREFS_NAME = "serenade_sync"
         const val KEY_CURSOR = "changes_cursor"
         const val INITIAL_CURSOR = "1970-01-01T00:00:00Z"

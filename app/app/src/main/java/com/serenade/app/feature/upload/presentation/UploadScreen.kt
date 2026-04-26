@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,9 @@ fun UploadScreen(
     val state by viewModel.state.collectAsState()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let(viewModel::selectFile)
+    }
+    val artworkPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let(viewModel::selectArtwork)
     }
 
     Scaffold(
@@ -58,6 +62,11 @@ fun UploadScreen(
             FilePickerCard(
                 file = state.selectedFile,
                 onPickFile = { picker.launch(AUDIO_MIME_TYPES) },
+            )
+
+            ArtworkPickerCard(
+                artworkUri = state.artworkUri,
+                onPickArtwork = { artworkPicker.launch("image/*") },
             )
 
             OutlinedTextField(
@@ -97,6 +106,41 @@ fun UploadScreen(
                 Icon(Icons.Default.CloudUpload, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(if (state.trackId == null) "Upload" else "Upload again")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtworkPickerCard(
+    artworkUri: Uri?,
+    onPickArtwork: () -> Unit,
+) {
+    OutlinedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onPickArtwork),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Default.Image, contentDescription = null)
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (artworkUri != null) "Artwork selected" else "Add artwork (optional)",
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = "JPEG, PNG, WEBP · max 5 MB",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

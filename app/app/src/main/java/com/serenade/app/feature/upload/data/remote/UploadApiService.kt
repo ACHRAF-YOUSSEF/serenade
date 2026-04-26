@@ -18,6 +18,7 @@ interface UploadApiService {
         @Part("album") album: RequestBody?,
         @Part("genre") genre: RequestBody,
         @Part file: MultipartBody.Part,
+        @Part artwork: MultipartBody.Part?,
     ): UploadResponse
 
     @GET("api/uploads/{trackId}")

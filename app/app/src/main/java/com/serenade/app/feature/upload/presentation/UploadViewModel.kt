@@ -19,6 +19,7 @@ import javax.inject.Inject
 
 data class UploadUiState(
     val selectedFile: UploadFileInfo? = null,
+    val artworkUri: Uri? = null,
     val title: String = "",
     val artist: String = "",
     val album: String = "",
@@ -65,6 +66,10 @@ class UploadViewModel @Inject constructor(
             .onFailure { error ->
                 _state.update { it.copy(error = error.message ?: "Unable to read selected file") }
             }
+    }
+
+    fun selectArtwork(uri: Uri) {
+        _state.update { it.copy(artworkUri = uri, error = null) }
     }
 
     fun updateTitle(value: String) {
@@ -129,6 +134,7 @@ class UploadViewModel @Inject constructor(
                     artist = snapshot.artist,
                     album = snapshot.album,
                     genre = snapshot.genre,
+                    artworkUri = snapshot.artworkUri,
                     onProgress = { bytes, total ->
                         val percent = if (total > 0L) ((bytes * 100L) / total).toInt() else 0
                         _state.update { it.copy(progressPercent = percent.coerceIn(0, 100)) }

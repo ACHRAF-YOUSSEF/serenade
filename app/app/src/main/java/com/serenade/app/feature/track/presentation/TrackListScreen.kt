@@ -28,7 +28,7 @@ import com.serenade.app.feature.track.data.entity.TrackEntity
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrackListScreen(
-    onTrackClick: (TrackEntity) -> Unit,
+    onTrackClick: (TrackEntity, List<TrackEntity>) -> Unit,
     onSearchClick: () -> Unit,
     onLibraryClick: () -> Unit,
     onDownloadsClick: () -> Unit,
@@ -87,7 +87,7 @@ fun TrackListScreen(
                                 TrackRow(
                                     track = track,
                                     download = downloadsByTrackId[track.id],
-                                    onClick = { onTrackClick(track) },
+                                    onClick = { onTrackClick(track, s.tracks) },
                                     onDownloadClick = { viewModel.queueDownload(track) },
                                     onDeleteDownload = { viewModel.deleteDownload(track.id) },
                                 )
