@@ -5,11 +5,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Canvas
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.graphics.createBitmap
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -21,11 +23,11 @@ import com.serenade.app.feature.playlist.data.entity.PlaylistEntity
 import com.serenade.app.feature.playlist.data.remote.PlaylistApiService
 import com.serenade.app.feature.playlist.data.remote.dto.CreatePlaylistRequest
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistSummaryResponse
+import com.serenade.app.feature.playlist.data.remote.dto.TrackPositionRequest
 import com.serenade.app.feature.rating.data.RatingDao
 import com.serenade.app.feature.rating.data.entity.RatingEntity
 import com.serenade.app.feature.rating.data.entity.RatingTargetType
 import com.serenade.app.feature.rating.data.remote.RatingApiService
-import com.serenade.app.feature.playlist.data.remote.dto.TrackPositionRequest
 import com.serenade.app.feature.rating.data.remote.dto.RatingRequest
 import com.serenade.app.feature.rating.data.remote.dto.RatingResponse
 import com.serenade.app.feature.sync.data.entity.AddPlaylistTrackOpPayload
@@ -38,17 +40,17 @@ import com.serenade.app.feature.sync.data.entity.RateOpPayload
 import com.serenade.app.feature.sync.data.entity.RemovePlaylistTrackOpPayload
 import com.serenade.app.feature.sync.data.entity.ReorderPlaylistTracksOpPayload
 import com.serenade.app.feature.sync.data.entity.UploadTrackOpPayload
+import com.serenade.app.feature.sync.data.remote.ChangesApiService
+import com.serenade.app.feature.sync.worker.SyncWorker
+import com.serenade.app.feature.track.data.TrackDao
+import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.upload.data.remote.UploadApiService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
-import com.serenade.app.feature.sync.data.remote.ChangesApiService
-import com.serenade.app.feature.sync.worker.SyncWorker
-import com.serenade.app.feature.track.data.TrackDao
-import com.serenade.app.feature.track.data.entity.TrackEntity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -240,11 +242,23 @@ class SyncRepository @Inject constructor(
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
         ) return
+
+        val largeIcon = runCatching {
+            val d = context.packageManager.getApplicationIcon(context.packageName)
+            val w = d.intrinsicWidth.coerceAtLeast(96)
+            val h = d.intrinsicHeight.coerceAtLeast(96)
+            val bmp = createBitmap(w, h)
+            d.setBounds(0, 0, w, h)
+            d.draw(Canvas(bmp))
+            bmp
+        }.getOrNull()
+
         val notification = NotificationCompat.Builder(context, UPLOAD_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
             .setContentTitle(trackTitle)
             .setContentText(artist)
             .setSubText("Upload failed")
+            .apply { largeIcon?.let { setLargeIcon(it) } }
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .bigText(artist)
@@ -253,6 +267,7 @@ class SyncRepository @Inject constructor(
             .setColor(0xFFB00020.toInt())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
+            .setProgress(100, 0, false)
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify(trackTitle.hashCode(), notification)
