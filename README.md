@@ -35,7 +35,7 @@ memory-bank/      ← project memory (read before contributing)
 - **Subtitles** — faster-whisper → WebVTT, synced overlay in player
 - **Downloads** — offline playback via WorkManager + app-private storage
 - **Sync** — cursor-based `GET /api/changes`, periodic WorkManager sync
-- **Outbox** — offline mutations (playlist/rating) queue in Room, flush on sync
+- **Outbox** — offline mutations (playlist/rating/reorder/upload) queue in Room, flush on sync
 
 ## Architecture
 
@@ -153,6 +153,8 @@ See [`.github/instructions/security-auditor.instructions.md`](.github/instructio
 - Android module layout flat inside `:app` (no `:feature:*` split yet)
 - `nowPlayingTrack` in AppNavigation is local state — no queue/playlist support
 - Full HLS package download (`.m3u8` manifests) still pending
-- Upload outbox (offline queue) still pending
-- Playlist drag-reorder UI pending
+- Upload outbox skips missing local files silently; retry/error surfacing pending
+- Rate limiting is in-memory; Redis-backed distributed buckets pending
+- Worker processing failures dead-letter immediately; retry/backoff before DLQ pending
+- Existing RabbitMQ queues need delete + redeclare to pick up new DLX args
 - Workers `shared/` uses `sys.path` insert — use proper package install in prod

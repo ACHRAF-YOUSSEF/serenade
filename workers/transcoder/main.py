@@ -32,7 +32,7 @@ async def handle_message(
         await message.reject(requeue=False)
         return
 
-    async with message.process(requeue=True):
+    async with message.process(requeue=False):
         track_id = job.track_id
         logger.info("Processing track %s", track_id)
 
