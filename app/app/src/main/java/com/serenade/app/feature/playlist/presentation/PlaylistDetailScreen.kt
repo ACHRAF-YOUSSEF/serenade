@@ -26,7 +26,7 @@ import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistDetailScreen(
-    onTrackClick: (TrackResponse) -> Unit,
+    onTrackClick: (TrackResponse, List<TrackResponse>) -> Unit,
     onBack: () -> Unit,
     viewModel: PlaylistDetailViewModel,
 ) {
@@ -102,7 +102,7 @@ fun PlaylistDetailScreen(
                                 val idx = s.detail.tracks.indexOf(track)
                                 PlaylistTrackRow(
                                     track = track,
-                                    onClick = { onTrackClick(track) },
+                                    onClick = { onTrackClick(track, s.detail.tracks) },
                                     onRemove = { viewModel.removeTrack(track.id) },
                                     onMoveUp = if (idx > 0) {
                                         { viewModel.moveTrackUp(track.id) }

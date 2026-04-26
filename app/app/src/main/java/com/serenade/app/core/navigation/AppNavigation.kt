@@ -14,6 +14,7 @@ import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.auth.presentation.LoginScreen
 import com.serenade.app.feature.auth.presentation.RegisterScreen
 import com.serenade.app.feature.download.presentation.DownloadScreen
+import com.serenade.app.feature.player.PlaybackItem
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.feature.player.presentation.MiniPlayerBar
 import com.serenade.app.feature.player.presentation.PlayerScreen
@@ -68,7 +69,30 @@ fun AppNavigation(
     val startDestination = if (authRepository.isLoggedIn()) ROUTE_HOME else ROUTE_LOGIN
     val playbackState by playerController.state.collectAsState()
 
-    var nowPlayingTrack by remember { mutableStateOf<TrackEntity?>(null) }
+    var playbackQueue by remember { mutableStateOf<List<TrackEntity>>(emptyList()) }
+    val nowPlayingTrack = remember(playbackQueue, playbackState.currentTrackId) {
+        playbackQueue.firstOrNull { it.id == playbackState.currentTrackId }
+    }
+
+    fun playQueue(tracks: List<TrackEntity>, selected: TrackEntity): Boolean {
+        val entries = tracks.mapNotNull { track ->
+            track.playbackUri()?.let { url -> track to PlaybackItem(track.id, url) }
+        }
+        val startIndex = entries.indexOfFirst { it.first.id == selected.id }
+        if (startIndex < 0) return false
+        playbackQueue = entries.map { it.first }
+        playerController.playQueue(entries.map { it.second }, startIndex)
+        return true
+    }
+
+    fun playResponseQueue(
+        tracks: List<TrackResponse>,
+        selected: TrackResponse,
+    ): Boolean {
+        val entities = tracks.map { it.toEntity() }
+        val selectedEntity = entities.firstOrNull { it.id == selected.id } ?: return false
+        return playQueue(entities, selectedEntity)
+    }
 
     Scaffold(
         bottomBar = {
@@ -116,10 +140,7 @@ fun AppNavigation(
             composable(ROUTE_HOME) {
                 TrackListScreen(
                     onTrackClick = { track ->
-                        nowPlayingTrack = track
-                        track.playbackUri()?.let { url ->
-                            playerController.play(track.id, url)
-                        }
+                        playQueue(listOf(track), track)
                     },
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
@@ -131,11 +152,10 @@ fun AppNavigation(
             }
             composable(ROUTE_SEARCH) {
                 SearchScreen(
-                    onTrackClick = { r ->
-                        val entity = r.toEntity()
-                        nowPlayingTrack = entity
-                        entity.streamUrl?.let { url -> playerController.play(entity.id, url) }
-                        navController.navigate(ROUTE_PLAYER)
+                    onTrackClick = { track, queue ->
+                        if (playResponseQueue(queue, track)) {
+                            navController.navigate(ROUTE_PLAYER)
+                        }
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
@@ -153,9 +173,9 @@ fun AppNavigation(
             composable(ROUTE_DOWNLOADS) {
                 DownloadScreen(
                     onTrackClick = { track ->
-                        nowPlayingTrack = track
-                        track.playbackUri()?.let { url -> playerController.play(track.id, url) }
-                        navController.navigate(ROUTE_PLAYER)
+                        if (playQueue(listOf(track), track)) {
+                            navController.navigate(ROUTE_PLAYER)
+                        }
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
@@ -169,11 +189,10 @@ fun AppNavigation(
             }
             composable("$ROUTE_PLAYLIST_DETAIL/{$ARG_PLAYLIST_ID}") {
                 PlaylistDetailScreen(
-                    onTrackClick = { r ->
-                        val entity = r.toEntity()
-                        nowPlayingTrack = entity
-                        entity.streamUrl?.let { url -> playerController.play(entity.id, url) }
-                        navController.navigate(ROUTE_PLAYER)
+                    onTrackClick = { track, queue ->
+                        if (playResponseQueue(queue, track)) {
+                            navController.navigate(ROUTE_PLAYER)
+                        }
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),

@@ -13,14 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    onTrackClick: (TrackResponse) -> Unit,
+    onTrackClick: (TrackResponse, List<TrackResponse>) -> Unit,
     onBack: () -> Unit,
     viewModel: SearchViewModel,
 ) {
@@ -79,7 +78,7 @@ fun SearchScreen(
                         leadingContent = {
                             Icon(Icons.Default.MusicNote, contentDescription = null)
                         },
-                        modifier = Modifier.clickable { onTrackClick(track) },
+                        modifier = Modifier.clickable { onTrackClick(track, results) },
                     )
                     HorizontalDivider()
                 }

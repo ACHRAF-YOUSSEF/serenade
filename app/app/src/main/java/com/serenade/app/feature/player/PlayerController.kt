@@ -1,22 +1,29 @@
 package com.serenade.app.feature.player
 
-import android.content.ContentValues.TAG
-import android.util.Log
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.serenade.app.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.media3.common.MimeTypes
-import com.serenade.app.BuildConfig
+
+data class PlaybackItem(
+    val trackId: String,
+    val streamUrl: String,
+)
 
 data class PlaybackState(
     val isPlaying: Boolean = false,
     val currentTrackId: String? = null,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
+    val hasPrevious: Boolean = false,
+    val hasNext: Boolean = false,
+    val queueIndex: Int = 0,
+    val queueSize: Int = 0,
 )
 
 @Singleton
@@ -28,45 +35,50 @@ class PlayerController @Inject constructor(
 
     init {
         player.addListener(object : Player.Listener {
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                _state.value = _state.value.copy(isPlaying = isPlaying)
-            }
-
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                _state.value = _state.value.copy(
-                    currentTrackId = mediaItem?.mediaId,
-                    positionMs = 0L,
-                    durationMs = player.duration.coerceAtLeast(0L),
-                )
+            override fun onEvents(player: Player, events: Player.Events) {
+                syncPlaybackState()
             }
         })
     }
 
     fun play(trackId: String, streamUrl: String) {
-        val baseUrl = BuildConfig.API_BASE_URL
-        
-        val fullUrl = if (streamUrl.startsWith("http")) streamUrl else baseUrl + streamUrl
+        playQueue(listOf(PlaybackItem(trackId, streamUrl)))
+    }
 
-        val item = MediaItem.Builder()
-            .setMediaId(trackId)
-            .setUri(fullUrl)
-            .setMimeType(MimeTypes.APPLICATION_M3U8)
-            .build()
-
-        Log.i(TAG, "play: Playing trackId=$trackId, streamUrl=$streamUrl")
-        Log.i(TAG, "play: item=$item")
-
-        player.setMediaItem(item)
+    fun playQueue(items: List<PlaybackItem>, startIndex: Int = 0) {
+        if (items.isEmpty()) return
+        val mediaItems = items.map { it.toMediaItem() }
+        val boundedIndex = startIndex.coerceIn(mediaItems.indices)
+        player.setMediaItems(mediaItems, boundedIndex, 0L)
         player.prepare()
         player.play()
+        syncPlaybackState()
     }
 
     fun togglePlayPause() {
         if (player.isPlaying) player.pause() else player.play()
+        syncPlaybackState()
     }
 
     fun seekTo(positionMs: Long) {
         player.seekTo(positionMs)
+        syncPlaybackState()
+    }
+
+    fun skipToPrevious() {
+        if (player.hasPreviousMediaItem()) {
+            player.seekToPreviousMediaItem()
+            player.play()
+            syncPlaybackState()
+        }
+    }
+
+    fun skipToNext() {
+        if (player.hasNextMediaItem()) {
+            player.seekToNextMediaItem()
+            player.play()
+            syncPlaybackState()
+        }
     }
 
     fun stop() {
@@ -76,13 +88,55 @@ class PlayerController @Inject constructor(
 
     fun syncPosition() {
         if (_state.value.currentTrackId == null) return
-        _state.value = _state.value.copy(
-            positionMs = player.currentPosition,
-            durationMs = player.duration.coerceAtLeast(0L),
-        )
+        syncPlaybackState()
     }
 
     fun release() {
         player.release()
+    }
+
+    private fun syncPlaybackState() {
+        val mediaItemCount = player.mediaItemCount
+        val queueIndex = if (mediaItemCount > 0) {
+            player.currentMediaItemIndex.coerceAtLeast(0)
+        } else {
+            0
+        }
+        _state.value = PlaybackState(
+            isPlaying = player.isPlaying,
+            currentTrackId = player.currentMediaItem?.mediaId,
+            positionMs = player.currentPosition.coerceAtLeast(0L),
+            durationMs = player.duration.coerceAtLeast(0L),
+            hasPrevious = player.hasPreviousMediaItem(),
+            hasNext = player.hasNextMediaItem(),
+            queueIndex = queueIndex,
+            queueSize = mediaItemCount,
+        )
+    }
+
+    private fun PlaybackItem.toMediaItem(): MediaItem {
+        val resolvedUrl = streamUrl.resolvePlaybackUrl()
+        val builder = MediaItem.Builder()
+            .setMediaId(trackId)
+            .setUri(resolvedUrl)
+        if (resolvedUrl.isHlsManifestUrl()) {
+            builder.setMimeType(MimeTypes.APPLICATION_M3U8)
+        }
+        return builder.build()
+    }
+
+    private fun String.resolvePlaybackUrl(): String {
+        if (startsWith("http://", ignoreCase = true) ||
+            startsWith("https://", ignoreCase = true) ||
+            startsWith("file:", ignoreCase = true) ||
+            startsWith("content:", ignoreCase = true)
+        ) {
+            return this
+        }
+        return "${BuildConfig.API_BASE_URL.trimEnd('/')}/${trimStart('/')}"
+    }
+
+    private fun String.isHlsManifestUrl(): Boolean {
+        return substringBefore('?').endsWith(".m3u8", ignoreCase = true)
     }
 }

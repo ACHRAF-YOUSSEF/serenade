@@ -79,6 +79,15 @@ fun PlayerScreen(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )
+            if (state.queueSize > 1) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${state.queueIndex + 1} / ${state.queueSize}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -121,7 +130,10 @@ fun PlayerScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                IconButton(onClick = {}, enabled = false) {
+                IconButton(
+                    onClick = viewModel::skipToPrevious,
+                    enabled = state.hasPrevious,
+                ) {
                     Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(36.dp))
                 }
                 FilledIconButton(
@@ -134,7 +146,10 @@ fun PlayerScreen(
                         modifier = Modifier.size(36.dp),
                     )
                 }
-                IconButton(onClick = {}, enabled = false) {
+                IconButton(
+                    onClick = viewModel::skipToNext,
+                    enabled = state.hasNext,
+                ) {
                     Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(36.dp))
                 }
             }
