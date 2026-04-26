@@ -1,10 +1,10 @@
 package com.serenade.app.core.di
 
 import android.content.Context
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import com.serenade.app.core.di.PublicOkHttpClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +24,8 @@ object PlayerModule {
         @PublicOkHttpClient
         okHttpClient: OkHttpClient
     ): ExoPlayer {
-        val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
+        val httpFactory = OkHttpDataSource.Factory(okHttpClient)
+        val dataSourceFactory = DefaultDataSource.Factory(context, httpFactory)
         val mediaSourceFactory = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(dataSourceFactory)
 
