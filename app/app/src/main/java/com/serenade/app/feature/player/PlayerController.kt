@@ -11,6 +11,8 @@ import com.serenade.app.feature.player.service.SerenadePlayerService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.io.File
+import java.net.URI
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -53,6 +55,7 @@ class PlayerController @Inject constructor(
     fun playQueue(items: List<PlaybackItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
         context.startForegroundService(Intent(context, SerenadePlayerService::class.java))
+        items.forEach { patchLocalHlsIfNeeded(it.streamUrl.resolvePlaybackUrl()) }
         val mediaItems = items.map { it.toMediaItem() }
         val boundedIndex = startIndex.coerceIn(mediaItems.indices)
         player.setMediaItems(mediaItems, boundedIndex, 0L)
@@ -135,5 +138,16 @@ class PlayerController @Inject constructor(
 
     private fun String.isHlsManifestUrl(): Boolean {
         return substringBefore('?').endsWith(".m3u8", ignoreCase = true)
+    }
+
+    private fun patchLocalHlsIfNeeded(resolvedUrl: String) {
+        if (!resolvedUrl.startsWith("file:", ignoreCase = true)) return
+        if (!resolvedUrl.substringBefore('?').endsWith(".m3u8", ignoreCase = true)) return
+        val file = runCatching { File(URI.create(resolvedUrl)) }.getOrNull() ?: return
+        if (!file.exists()) return
+        val content = file.readText()
+        if (!content.contains("#EXT-X-ENDLIST")) {
+            file.appendText("\n#EXT-X-ENDLIST\n")
+        }
     }
 }

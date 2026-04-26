@@ -135,6 +135,9 @@ class DownloadWorker @AssistedInject constructor(
             )
         }
 
+        if (rewritten.none { it.trim() == "#EXT-X-ENDLIST" }) {
+            rewritten.add("#EXT-X-ENDLIST")
+        }
         manifestFile.writeText(rewritten.joinToString(separator = "\n", postfix = "\n"))
         return manifestFile.absolutePath
     }

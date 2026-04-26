@@ -28,7 +28,11 @@ class SerenadePlayerService : MediaSessionService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build())
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this)
+                .setNotificationId(NOTIFICATION_ID)
+                .build()
+        )
         mediaSession = MediaSession.Builder(this, player).build()
     }
 
