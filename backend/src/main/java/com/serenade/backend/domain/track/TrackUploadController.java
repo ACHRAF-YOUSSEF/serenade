@@ -29,8 +29,9 @@ public class TrackUploadController {
             @RequestParam(required = false) String album,
             @RequestParam @NotNull Genre genre,
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "artwork", required = false) MultipartFile artwork,
             Authentication auth) {
-        return uploadService.upload(auth.getName(), title, artist, album, genre, file);
+        return uploadService.upload(auth.getName(), title, artist, album, genre, file, artwork);
     }
 
     @GetMapping("/api/uploads/{trackId}")

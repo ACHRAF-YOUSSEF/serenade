@@ -79,6 +79,10 @@ public class Track {
     public int getVersion() { return version; }
     public Instant getUpdatedAt() { return updatedAt; }
 
+    public void setArtworkUrl(String artworkUrl) {
+        this.artworkUrl = artworkUrl;
+    }
+
     public void markReady(String streamUrl, long durationMs) {
         this.streamUrl = streamUrl;
         this.durationMs = durationMs;

@@ -24,6 +24,10 @@ public class TrackUploadService {
     private static final Set<String> ALLOWED_AUDIO_EXTENSIONS = Set.of(
             "mp3", "flac", "ogg", "wav", "m4a", "aac"
     );
+    private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of(
+            "jpg", "jpeg", "png", "webp"
+    );
+    private static final long MAX_ARTWORK_BYTES = 5 * 1024 * 1024L;
 
     private final TrackRepository tracks;
     private final UserRepository users;
@@ -40,13 +44,24 @@ public class TrackUploadService {
 
     @Transactional
     public UploadResponse upload(String uploaderId, String title, String artist,
-                                  String album, Genre genre, MultipartFile file) {
+                                  String album, Genre genre, MultipartFile file,
+                                  MultipartFile artwork) {
         User uploader = users.findById(UUID.fromString(uploaderId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         validateUploadFile(file);
 
         Track track = new Track(title, artist, album, genre, uploader);
         track = tracks.save(track);
+
+        if (artwork != null && !artwork.isEmpty()) {
+            validateArtworkFile(artwork);
+            String ext = extractExtension(artwork.getOriginalFilename());
+            if (ext.isBlank()) ext = "jpg";
+            String artworkKey = "artwork/" + track.getId() + "." + ext;
+            minio.uploadRaw(artworkKey, artwork);
+            track.setArtworkUrl(minio.presignedGetUrl(artworkKey));
+            tracks.save(track);
+        }
 
         String rawKey = "raw/" + track.getId();
         minio.uploadRaw(rawKey, file);
@@ -73,6 +88,23 @@ public class TrackUploadService {
         return tracks.findByIdAndUploader_Id(trackId, userId)
                 .map(UploadStatusResponse::from)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    private void validateArtworkFile(MultipartFile file) {
+        if (file.getSize() > MAX_ARTWORK_BYTES) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Artwork exceeds 5 MB");
+        }
+        String ext = extractExtension(file.getOriginalFilename());
+        if (!ALLOWED_IMAGE_EXTENSIONS.contains(ext)) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported image format");
+        }
+        String contentType = file.getContentType();
+        if (contentType != null && !contentType.isBlank()) {
+            String norm = contentType.toLowerCase(Locale.ROOT);
+            if (!norm.startsWith("image/") && !norm.equals("application/octet-stream")) {
+                throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Not an image");
+            }
+        }
     }
 
     private void validateUploadFile(MultipartFile file) {
