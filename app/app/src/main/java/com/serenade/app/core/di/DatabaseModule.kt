@@ -85,7 +85,7 @@ object DatabaseModule {
                     `artworkUrl` TEXT,
                     `isCurrent` INTEGER NOT NULL,
                     `positionMs` INTEGER NOT NULL,
-                    `updatedAt` TEXT NOT NULL,
+                    `updatedAt` INTEGER NOT NULL,
                     PRIMARY KEY(`queuePosition`)
                 )
                 """.trimIndent()
@@ -102,7 +102,7 @@ object DatabaseModule {
                     `durationMs` INTEGER NOT NULL,
                     `artworkUrl` TEXT,
                     `lastPositionMs` INTEGER NOT NULL,
-                    `lastPlayedAt` TEXT NOT NULL,
+                    `lastPlayedAt` INTEGER NOT NULL,
                     `playCount` INTEGER NOT NULL,
                     PRIMARY KEY(`trackId`)
                 )
