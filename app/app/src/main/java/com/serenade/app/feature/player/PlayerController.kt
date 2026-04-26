@@ -52,7 +52,7 @@ class PlayerController @Inject constructor(
 
     fun playQueue(items: List<PlaybackItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
-        context.startService(Intent(context, SerenadePlayerService::class.java))
+        context.startForegroundService(Intent(context, SerenadePlayerService::class.java))
         val mediaItems = items.map { it.toMediaItem() }
         val boundedIndex = startIndex.coerceIn(mediaItems.indices)
         player.setMediaItems(mediaItems, boundedIndex, 0L)

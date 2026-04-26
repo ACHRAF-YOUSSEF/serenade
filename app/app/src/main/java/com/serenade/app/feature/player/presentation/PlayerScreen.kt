@@ -91,21 +91,23 @@ fun PlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            var dragProgress by remember { mutableFloatStateOf(0f) }
-            var dragDurationMs by remember { mutableLongStateOf(0L) }
+            data class DragState(var progress: Float = 0f, var durationMs: Long = 0L)
+            val drag = remember { DragState() }
             var isDragging by remember { mutableStateOf(false) }
-            val displayProgress = if (isDragging) dragProgress
+            var dragDisplayProgress by remember { mutableFloatStateOf(0f) }
+            val displayProgress = if (isDragging) dragDisplayProgress
                 else if (state.durationMs > 0) state.positionMs.toFloat() / state.durationMs else 0f
             Slider(
                 value = displayProgress,
                 onValueChange = {
-                    if (!isDragging) dragDurationMs = state.durationMs
+                    if (!isDragging) drag.durationMs = state.durationMs
+                    drag.progress = it
+                    dragDisplayProgress = it
                     isDragging = true
-                    dragProgress = it
                 },
                 onValueChangeFinished = {
-                    if (dragDurationMs > 0) {
-                        viewModel.seekTo((dragProgress * dragDurationMs).toLong())
+                    if (drag.durationMs > 0L) {
+                        viewModel.seekTo((drag.progress * drag.durationMs).toLong())
                     }
                     isDragging = false
                 },
