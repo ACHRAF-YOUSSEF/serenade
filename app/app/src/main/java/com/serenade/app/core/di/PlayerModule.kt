@@ -1,10 +1,11 @@
 package com.serenade.app.core.di
 
 import android.content.Context
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import com.serenade.app.core.di.PublicOkHttpClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,9 +28,18 @@ object PlayerModule {
         val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
         val mediaSourceFactory = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(dataSourceFactory)
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
 
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(mediaSourceFactory)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
+            .apply {
+                setAudioAttributes(audioAttributes, true)
+                setHandleAudioBecomingNoisy(true)
+            }
     }
 }
