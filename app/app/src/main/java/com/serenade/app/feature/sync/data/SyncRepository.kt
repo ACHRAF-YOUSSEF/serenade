@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.os.Build
+import android.widget.RemoteViews
+import com.serenade.app.R
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -243,7 +245,7 @@ class SyncRepository @Inject constructor(
                 != PackageManager.PERMISSION_GRANTED
         ) return
 
-        val largeIcon = runCatching {
+        val appIcon = runCatching {
             val d = context.packageManager.getApplicationIcon(context.packageName)
             val w = d.intrinsicWidth.coerceAtLeast(96)
             val h = d.intrinsicHeight.coerceAtLeast(96)
@@ -253,21 +255,24 @@ class SyncRepository @Inject constructor(
             bmp
         }.getOrNull()
 
+        val bigView = RemoteViews(context.packageName, R.layout.notification_upload_failed).apply {
+            setTextViewText(R.id.notif_title, trackTitle)
+            setTextViewText(R.id.notif_artist, artist)
+            appIcon?.let { setImageViewBitmap(R.id.notif_icon, it) }
+                ?: setImageViewResource(R.id.notif_icon, android.R.drawable.ic_media_play)
+        }
+
         val notification = NotificationCompat.Builder(context, UPLOAD_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
             .setContentTitle(trackTitle)
             .setContentText(artist)
             .setSubText("Upload failed")
-            .apply { largeIcon?.let { setLargeIcon(it) } }
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(artist)
-                    .setSummaryText("File no longer available — please re-upload")
-            )
+            .apply { appIcon?.let { setLargeIcon(it) } }
+            .setCustomBigContentView(bigView)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setColor(0xFFB00020.toInt())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .setProgress(100, 0, false)
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify(trackTitle.hashCode(), notification)
