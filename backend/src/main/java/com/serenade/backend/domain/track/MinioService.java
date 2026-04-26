@@ -6,6 +6,7 @@ import io.minio.http.Method;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -50,6 +51,17 @@ public class MinioService {
                     .build());
         } catch (Exception e) {
             throw new RuntimeException("MinIO presign failed: " + e.getMessage(), e);
+        }
+    }
+
+    public InputStream getObject(String objectKey) {
+        try {
+            return minio.getObject(GetObjectArgs.builder()
+                    .bucket(props.minio().bucket())
+                    .object(objectKey)
+                    .build());
+        } catch (Exception e) {
+            throw new RuntimeException("MinIO object read failed: " + e.getMessage(), e);
         }
     }
 
