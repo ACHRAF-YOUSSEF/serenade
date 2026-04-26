@@ -48,12 +48,11 @@ abstract class TrackDao {
     @Transaction
     open suspend fun upsertFromRemote(track: TrackEntity) {
         val existing = getByIdOnce(track.id)
-        insert(
-            track.copy(
-                localPath = existing?.localPath,
-                isDownloaded = existing?.isDownloaded ?: false,
-            )
-        )
+        if (existing != null) {
+            update(track.copy(localPath = existing.localPath, isDownloaded = existing.isDownloaded))
+        } else {
+            insert(track)
+        }
     }
 
     @Transaction

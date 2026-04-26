@@ -68,7 +68,7 @@ class PlayerController @Inject constructor(
 
     fun seekTo(positionMs: Long) {
         player.seekTo(positionMs)
-        syncPlaybackState()
+        _state.value = _state.value.copy(positionMs = positionMs)
     }
 
     fun skipToPrevious() {

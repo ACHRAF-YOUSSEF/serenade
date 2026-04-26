@@ -34,8 +34,6 @@ class SerenadePlayerService : MediaSessionService() {
 
     @OptIn(UnstableApi::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Satisfy the 5-second startForegroundService() window immediately.
-        // DefaultMediaNotificationProvider will replace this with proper media controls.
         ensureForeground()
         return super.onStartCommand(intent, flags, startId)
     }
@@ -45,7 +43,6 @@ class SerenadePlayerService : MediaSessionService() {
 
     override fun onDestroy() {
         mediaSession?.run {
-            player.release()
             release()
             mediaSession = null
         }
