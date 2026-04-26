@@ -44,6 +44,7 @@ class SerenadePlayerService : MediaSessionService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        ensureForeground()
         val mediaNotificationProvider = DefaultMediaNotificationProvider.Builder(this)
             .setNotificationId(NOTIFICATION_ID)
             .build()
