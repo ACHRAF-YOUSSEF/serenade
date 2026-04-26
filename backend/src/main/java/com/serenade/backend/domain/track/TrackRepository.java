@@ -21,16 +21,21 @@ public interface TrackRepository extends JpaRepository<Track, UUID> {
             SELECT * FROM tracks
             WHERE status = 'READY'
             AND (:genres = '' OR genre = ANY(string_to_array(:genres, ',')))
-            AND (:q = '' OR search_vector @@ plainto_tsquery('simple', :q))
+            AND (:q = '' OR search_vector @@ plainto_tsquery('simple', :q)
+                         OR title ILIKE '%' || :q || '%'
+                         OR artist ILIKE '%' || :q || '%')
             ORDER BY
-                CASE WHEN :q <> '' THEN ts_rank(search_vector, plainto_tsquery('simple', :q)) ELSE 0 END DESC,
+                CASE WHEN :q <> '' AND search_vector @@ plainto_tsquery('simple', :q)
+                     THEN ts_rank(search_vector, plainto_tsquery('simple', :q)) ELSE 0 END DESC,
                 updated_at DESC
             """,
             countQuery = """
             SELECT count(*) FROM tracks
             WHERE status = 'READY'
             AND (:genres = '' OR genre = ANY(string_to_array(:genres, ',')))
-            AND (:q = '' OR search_vector @@ plainto_tsquery('simple', :q))
+            AND (:q = '' OR search_vector @@ plainto_tsquery('simple', :q)
+                         OR title ILIKE '%' || :q || '%'
+                         OR artist ILIKE '%' || :q || '%')
             """,
             nativeQuery = true)
     Page<Track> search(@Param("q") String q, @Param("genres") String genres, Pageable pageable);
