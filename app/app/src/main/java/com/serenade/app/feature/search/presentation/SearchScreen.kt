@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ fun SearchScreen(
     val selectedGenres by viewModel.genres.collectAsState()
     val results by viewModel.results.collectAsState()
     val error by viewModel.error.collectAsState()
+    val loading by viewModel.loading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -61,15 +63,25 @@ fun SearchScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Genre.entries.forEach { g ->
+                    val selected = g.name in selectedGenres
                     FilterChip(
-                        selected = g.name in selectedGenres,
+                        selected = selected,
                         onClick = { viewModel.onGenreToggle(g.name) },
                         label = { Text(g.name) },
+                        leadingIcon = if (selected) {
+                            {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                )
+                            }
+                        } else null,
                     )
                 }
             }
-            if (error != null) {
-                Box(
+            when {
+                error != null -> Box(
                     modifier = Modifier.fillMaxSize().padding(24.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -79,8 +91,13 @@ fun SearchScreen(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                loading -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+                else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(results, key = { it.id }) { track ->
                         ListItem(
                             headlineContent = {

@@ -8,7 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @OptIn(FlowPreview::class)
@@ -28,28 +27,30 @@ class SearchViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val results: StateFlow<List<TrackResponse>> = combine(_query, _genres) { q, g -> q to g }
         .debounce(300)
         .flatMapLatest { (q, g) ->
             flow {
-                emit(emptyList())
-                val hasGenreFilter = g != allGenres
-                if (q.isBlank() && !hasGenreFilter) {
-                    _error.value = null
-                    return@flow
-                }
                 if (g.isEmpty()) {
                     _error.value = null
+                    _loading.value = false
+                    emit(emptyList())
                     return@flow
                 }
+                _loading.value = true
                 try {
                     _error.value = null
-                    val genresParam = if (!hasGenreFilter) null else g.joinToString(",")
+                    val genresParam = if (g == allGenres) null else g.joinToString(",")
                     emit(api.search(q = q, genres = genresParam).content)
                 } catch (e: Exception) {
                     _error.value = e.message ?: "Search failed"
                     emit(emptyList())
+                } finally {
+                    _loading.value = false
                 }
             }
         }
