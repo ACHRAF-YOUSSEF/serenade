@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.serenade.app.core.di.PublicOkHttpClient
 import com.serenade.app.feature.download.data.DownloadDao
 import com.serenade.app.feature.download.data.entity.DownloadState
 import com.serenade.app.feature.track.data.TrackDao
@@ -26,6 +27,7 @@ import java.util.Locale
 class DownloadWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
+    @param:PublicOkHttpClient
     private val client: OkHttpClient,
     private val downloadDao: DownloadDao,
     private val trackDao: TrackDao,

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.serenade.app.core.di.PublicOkHttpClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,6 +21,7 @@ object PlayerModule {
     @Singleton
     fun provideExoPlayer(
         @ApplicationContext context: Context,
+        @PublicOkHttpClient
         okHttpClient: OkHttpClient
     ): ExoPlayer {
         val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)

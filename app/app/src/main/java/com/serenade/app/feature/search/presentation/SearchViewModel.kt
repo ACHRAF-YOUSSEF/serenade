@@ -22,16 +22,24 @@ class SearchViewModel @Inject constructor(
     private val _genre = MutableStateFlow<String?>(null)
     val genre: StateFlow<String?> = _genre
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val results: StateFlow<List<TrackResponse>> = combine(_query, _genre) { q, g -> q to g }
         .debounce(300)
         .flatMapLatest { (q, g) ->
             flow {
                 emit(emptyList())
-                if (q.isBlank() && g == null) return@flow
+                if (q.isBlank() && g == null) {
+                    _error.value = null
+                    return@flow
+                }
                 try {
+                    _error.value = null
                     emit(api.search(q = q, genre = g).content)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    _error.value = e.message ?: "Search failed"
                     emit(emptyList())
                 }
             }

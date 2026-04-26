@@ -35,6 +35,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @AuthenticatedOkHttpClient
     fun provideOkHttpClient(tokenStore: SecureTokenStore, authenticator: TokenRefreshAuthenticator): OkHttpClient {
         return OkHttpClient.Builder()
             .authenticator(authenticator)
@@ -63,7 +64,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(client: OkHttpClient): Retrofit {
+    @PublicOkHttpClient
+    fun providePublicOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(300, TimeUnit.SECONDS)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(@AuthenticatedOkHttpClient client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.API_BASE_URL)
             .client(client)

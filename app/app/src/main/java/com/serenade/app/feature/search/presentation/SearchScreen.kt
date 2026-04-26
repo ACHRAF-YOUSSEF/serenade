@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ fun SearchScreen(
     val query by viewModel.query.collectAsState()
     val selectedGenre by viewModel.genre.collectAsState()
     val results by viewModel.results.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         topBar = {
@@ -66,21 +68,34 @@ fun SearchScreen(
                     )
                 }
             }
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(results, key = { it.id }) { track ->
-                    ListItem(
-                        headlineContent = {
-                            Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        },
-                        supportingContent = {
-                            Text(track.artist, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        },
-                        leadingContent = {
-                            Icon(Icons.Default.MusicNote, contentDescription = null)
-                        },
-                        modifier = Modifier.clickable { onTrackClick(track, results) },
+            if (error != null) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
-                    HorizontalDivider()
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(results, key = { it.id }) { track ->
+                        ListItem(
+                            headlineContent = {
+                                Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
+                            supportingContent = {
+                                Text(track.artist, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
+                            leadingContent = {
+                                Icon(Icons.Default.MusicNote, contentDescription = null)
+                            },
+                            modifier = Modifier.clickable { onTrackClick(track, results) },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }
