@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.hilt.android)
 }
 
+val serenadeApiBaseUrl = providers.gradleProperty("SERENADE_API_BASE_URL")
+    .orElse(providers.environmentVariable("SERENADE_API_BASE_URL"))
+    .orElse("http://192.168.0.218:8080/")
+    .get()
+    .replace("\"", "\\\"")
+
 android {
     namespace = "com.serenade.app"
     compileSdk {
@@ -22,7 +28,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.0.218:8080/\"")
+        buildConfigField("String", "API_BASE_URL", "\"$serenadeApiBaseUrl\"")
     }
 
     buildTypes {
