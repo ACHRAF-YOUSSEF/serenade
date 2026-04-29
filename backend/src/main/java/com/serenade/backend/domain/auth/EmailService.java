@@ -49,7 +49,6 @@ public class EmailService {
         Context context = new Context();
         context.setVariable("appName", properties.mail().appName());
         context.setVariable("username", username);
-        context.setVariable("frontendBaseUrl", properties.mail().frontendBaseUrl());
         return context;
     }
 

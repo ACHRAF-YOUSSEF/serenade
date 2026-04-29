@@ -100,7 +100,6 @@ app:
     from: ${MAIL_FROM:Serenade <noreply@serenade.local>}
     app-name: Serenade
     verification-code-expiry-minutes: 10
-    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
   minio:
     endpoint: ${MINIO_ENDPOINT:}
     access-key: ${MINIO_ACCESS_KEY:}
