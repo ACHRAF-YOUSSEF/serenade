@@ -44,9 +44,13 @@ springdoc:
     path: /v3/api-docs
 
 logging:
-  structured:
-    format:
-      console: logstash
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %clr(%5p) %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
+  level:
+    org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport: WARN
+    org.hibernate.orm.connections.pooling: WARN
+    org.hibernate.orm.core: WARN
+    org.springframework.security.config.annotation.authentication.configuration: WARN
 
 management:
   endpoints:

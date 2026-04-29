@@ -1,33 +1,41 @@
-import json
 import logging
-from datetime import datetime, timezone
 
 from .request_context import current_request_id
 
 
-class JsonFormatter(logging.Formatter):
+class _DevFormatter(logging.Formatter):
+    _LEVEL_COLORS = {
+        "DEBUG": "\033[36m",
+        "INFO": "\033[32m",
+        "WARNING": "\033[33m",
+        "ERROR": "\033[31m",
+        "CRITICAL": "\033[35m",
+    }
+    _RESET = "\033[0m"
+
     def format(self, record: logging.LogRecord) -> str:
-        payload = {
-            "timestamp": datetime.fromtimestamp(record.created, timezone.utc).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-        request_id = current_request_id()
-        if request_id:
-            payload["request_id"] = request_id
+        color = self._LEVEL_COLORS.get(record.levelname, "")
+        ts = self.formatTime(record, "%H:%M:%S.%f")[:-3]
         worker = getattr(record, "worker", None)
+        rid = current_request_id()
+        ctx = ""
         if worker:
-            payload["worker"] = worker
+            ctx += f" [{worker}]"
+        if rid:
+            ctx += f" [{rid}]"
+        base = f"{ts} {color}{record.levelname:>8}{self._RESET}{ctx} {record.name}: {record.getMessage()}"
         if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
-        return json.dumps(payload, ensure_ascii=False)
+            base += "\n" + self.formatException(record.exc_info)
+        return base
 
 
-def configure_json_logging(level: int = logging.INFO) -> None:
+def configure_logging(level: int = logging.INFO) -> None:
     handler = logging.StreamHandler()
-    handler.setFormatter(JsonFormatter())
+    handler.setFormatter(_DevFormatter())
     root = logging.getLogger()
     root.handlers.clear()
     root.setLevel(level)
     root.addHandler(handler)
+
+
+configure_json_logging = configure_logging
