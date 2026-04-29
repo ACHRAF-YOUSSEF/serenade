@@ -18,6 +18,10 @@ class PlaybackRepository @Inject constructor(
 
     suspend fun savedQueue(): List<PlaybackQueueEntity> = dao.getQueueOnce()
 
+    suspend fun clearQueue() {
+        dao.clearQueue()
+    }
+
     suspend fun saveQueue(items: List<PlaybackItem>, currentIndex: Int) {
         val now = Instant.now()
         val queue = items.mapIndexed { index, item ->

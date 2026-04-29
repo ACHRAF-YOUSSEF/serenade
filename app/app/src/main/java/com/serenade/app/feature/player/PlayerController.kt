@@ -104,6 +104,23 @@ class PlayerController @Inject constructor(
         syncPlaybackState()
     }
 
+    fun stopPlayback(clearPersistedQueue: Boolean = false) {
+        player.pause()
+        player.stop()
+        player.clearMediaItems()
+        lastPersistedTrackId = null
+        lastPersistedPositionMs = -1L
+        lastPersistedAtMs = 0L
+        lastHistoryTrackId = null
+        _state.value = PlaybackState()
+        context.stopService(Intent(context, SerenadePlayerService::class.java))
+        if (clearPersistedQueue) {
+            scope.launch {
+                playbackRepository.clearQueue()
+            }
+        }
+    }
+
     fun seekTo(positionMs: Long) {
         player.seekTo(positionMs)
         _state.value = _state.value.copy(positionMs = positionMs)

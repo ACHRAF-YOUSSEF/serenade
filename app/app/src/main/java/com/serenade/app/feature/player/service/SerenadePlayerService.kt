@@ -65,6 +65,15 @@ class SerenadePlayerService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
         mediaSession
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        player.pause()
+        player.stop()
+        player.clearMediaItems()
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         player.removeListener(notificationRefreshListener)
         mediaSession?.run {

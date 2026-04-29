@@ -47,6 +47,7 @@ import com.serenade.app.ui.theme.SrSurfaceHi
 import com.serenade.app.ui.theme.SrText
 import com.serenade.app.ui.theme.SrTextDim
 import com.serenade.app.ui.theme.SrTextMute
+import com.serenade.app.ui.theme.colorsFor
 
 @Composable
 fun YouScreen(
@@ -165,10 +166,8 @@ private fun ThemeOption(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val swatches = when (choice) {
-        SerenadeThemeChoice.Midnight -> listOf(SrPrimary, SrPlum, SrCoral)
-        SerenadeThemeChoice.Aurora -> listOf(Color(0xFF5EE6C7), Color(0xFF3D6FB8), Color(0xFFC76FE6))
-    }
+    val previewColors = colorsFor(choice)
+    val swatches = listOf(previewColors.primary, previewColors.plum, previewColors.coral)
     Row(
         modifier = Modifier
             .fillMaxWidth()

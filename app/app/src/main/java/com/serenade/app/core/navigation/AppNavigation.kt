@@ -250,6 +250,8 @@ fun AppNavigation(
                     onThemeSelected = onThemeSelected,
                     onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
                     onLogout = {
+                        playerController.stopPlayback(clearPersistedQueue = true)
+                        playbackQueue = emptyList()
                         authRepository.logout()
                         navController.navigate(ROUTE_LOGIN) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }

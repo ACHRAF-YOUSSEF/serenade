@@ -5,6 +5,8 @@
 ## Pending
 
 ## Completed
+- [TASK042] Theme Preview Colors - Completed on 2026-04-29
+- [TASK041] Stop Media on Logout and App Close - Completed on 2026-04-29
 - [TASK040] You UI and Flyway Checksum Fix - Completed on 2026-04-29
 - [TASK039] Email Verification and Password Reset - Completed on 2026-04-29
 - [TASK038] Upload Studio and Downloads Design - Completed on 2026-04-29
