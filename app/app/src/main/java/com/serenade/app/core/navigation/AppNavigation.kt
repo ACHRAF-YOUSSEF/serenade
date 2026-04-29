@@ -1,13 +1,22 @@
 package com.serenade.app.core.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Scaffold
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.auth.data.AuthRepository
@@ -26,6 +35,7 @@ import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
 import com.serenade.app.feature.upload.presentation.UploadScreen
+import com.serenade.app.ui.theme.*
 import java.io.File
 import java.time.Instant
 
@@ -46,20 +56,37 @@ private fun TrackResponse.toEntity() = TrackEntity(
     updatedAt = Instant.now(),
 )
 
-private fun TrackEntity.playbackUri(): String? {
-    return localPath?.let { Uri.fromFile(File(it)).toString() } ?: streamUrl
-}
+private fun TrackEntity.playbackUri(): String? =
+    localPath?.let { Uri.fromFile(File(it)).toString() } ?: streamUrl
 
-private const val ROUTE_LOGIN = "login"
+private const val ROUTE_LOGIN    = "login"
 private const val ROUTE_REGISTER = "register"
-private const val ROUTE_HOME = "home"
-private const val ROUTE_PLAYER = "player"
-private const val ROUTE_SEARCH = "search"
-private const val ROUTE_LIBRARY = "library"
+private const val ROUTE_HOME     = "home"
+private const val ROUTE_SEARCH   = "search"
+private const val ROUTE_LIBRARY  = "library"
 private const val ROUTE_DOWNLOADS = "downloads"
-private const val ROUTE_UPLOAD = "upload"
+private const val ROUTE_UPLOAD   = "upload"
+private const val ROUTE_PLAYER   = "player"
 private const val ROUTE_PLAYLIST_DETAIL = "playlist"
 private const val ARG_PLAYLIST_ID = "playlistId"
+
+// Bottom tabs visible post-login
+private data class NavTab(
+    val route: String,
+    val label: String,
+    val iconSelected: ImageVector,
+    val iconDefault: ImageVector,
+)
+
+private val TABS = listOf(
+    NavTab(ROUTE_HOME,    "Listen",  Icons.Filled.Home,        Icons.Outlined.Home),
+    NavTab(ROUTE_SEARCH,  "Search",  Icons.Filled.Search,      Icons.Outlined.Search),
+    NavTab(ROUTE_LIBRARY, "Library", Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
+    NavTab(ROUTE_UPLOAD,  "Studio",  Icons.Filled.CloudUpload,  Icons.Outlined.CloudUpload),
+    NavTab(ROUTE_DOWNLOADS, "You",   Icons.Filled.Person,       Icons.Outlined.Person),
+)
+
+private val TAB_ROUTES = TABS.map { it.route }.toSet()
 
 @Composable
 fun AppNavigation(
@@ -96,31 +123,45 @@ fun AppNavigation(
         return true
     }
 
-    fun playResponseQueue(
-        tracks: List<TrackResponse>,
-        selected: TrackResponse,
-    ): Boolean {
+    fun playResponseQueue(tracks: List<TrackResponse>, selected: TrackResponse): Boolean {
         val entities = tracks.map { it.toEntity() }
         val selectedEntity = entities.firstOrNull { it.id == selected.id } ?: return false
         return playQueue(entities, selectedEntity)
     }
 
+    val backStack by navController.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route
+    val showBottomBar = currentRoute in TAB_ROUTES
+
     Scaffold(
+        containerColor = SrBg,
         bottomBar = {
-            MiniPlayerBar(
-                state = playbackState,
-                trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle,
-                trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist,
-                artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
-                onTogglePlayPause = playerController::togglePlayPause,
-                onBarClick = {
-                    if (playbackState.currentTrackId != null) {
-                        navController.navigate(ROUTE_PLAYER)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+            if (showBottomBar) {
+                Column(
+                    modifier = Modifier
+                        .background(Color.Transparent)
+                        .navigationBarsPadding(),
+                ) {
+                    MiniPlayerBar(
+                        state = playbackState,
+                        trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle,
+                        trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist,
+                        artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
+                        onTogglePlayPause = playerController::togglePlayPause,
+                        onBarClick = {
+                            if (playbackState.currentTrackId != null) {
+                                navController.navigate(ROUTE_PLAYER)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    SrBottomNav(
+                        navController = navController,
+                        currentRoute = currentRoute,
+                    )
+                }
+            }
+        },
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -151,9 +192,7 @@ fun AppNavigation(
             }
             composable(ROUTE_HOME) {
                 TrackListScreen(
-                    onTrackClick = { track, allTracks ->
-                        playQueue(allTracks, track)
-                    },
+                    onTrackClick = { track, allTracks -> playQueue(allTracks, track) },
                     onSearchClick = { navController.navigate(ROUTE_SEARCH) },
                     onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
                     onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
@@ -165,9 +204,7 @@ fun AppNavigation(
             composable(ROUTE_SEARCH) {
                 SearchScreen(
                     onTrackClick = { track, queue ->
-                        if (playResponseQueue(queue, track)) {
-                            navController.navigate(ROUTE_PLAYER)
-                        }
+                        if (playResponseQueue(queue, track)) navController.navigate(ROUTE_PLAYER)
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
@@ -185,9 +222,7 @@ fun AppNavigation(
             composable(ROUTE_DOWNLOADS) {
                 DownloadScreen(
                     onTrackClick = { track ->
-                        if (playQueue(listOf(track), track)) {
-                            navController.navigate(ROUTE_PLAYER)
-                        }
+                        if (playQueue(listOf(track), track)) navController.navigate(ROUTE_PLAYER)
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
@@ -202,9 +237,7 @@ fun AppNavigation(
             composable("$ROUTE_PLAYLIST_DETAIL/{$ARG_PLAYLIST_ID}") {
                 PlaylistDetailScreen(
                     onTrackClick = { track, queue ->
-                        if (playResponseQueue(queue, track)) {
-                            navController.navigate(ROUTE_PLAYER)
-                        }
+                        if (playResponseQueue(queue, track)) navController.navigate(ROUTE_PLAYER)
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
@@ -220,6 +253,55 @@ fun AppNavigation(
                     viewModel = hiltViewModel(),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SrBottomNav(
+    navController: NavController,
+    currentRoute: String?,
+) {
+    NavigationBar(
+        containerColor = SrBgDeep,
+        tonalElevation = 0.dp,
+    ) {
+        TABS.forEach { tab ->
+            val selected = currentRoute == tab.route
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    if (!selected) {
+                        navController.navigate(tab.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = if (selected) tab.iconSelected else tab.iconDefault,
+                        contentDescription = tab.label,
+                        modifier = Modifier.size(22.dp),
+                    )
+                },
+                label = {
+                    Text(
+                        text = tab.label,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Default,
+                        ),
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = SrPrimary,
+                    selectedTextColor = SrPrimary,
+                    indicatorColor = SrSurfaceHi,
+                    unselectedIconColor = SrTextMute,
+                    unselectedTextColor = SrTextMute,
+                ),
+            )
         }
     }
 }
