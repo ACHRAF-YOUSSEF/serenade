@@ -12,7 +12,7 @@ create table auth_codes (
     constraint auth_codes_purpose_check check (purpose in ('EMAIL_VERIFICATION', 'PASSWORD_RESET'))
 );
 
-create index idx_auth_codes_active_hash
+create unique index idx_auth_codes_active_hash
     on auth_codes (purpose, code_hash)
     where consumed_at is null;
 
