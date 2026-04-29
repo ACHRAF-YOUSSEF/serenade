@@ -46,12 +46,14 @@ fun UploadScreen(
     viewModel: UploadViewModel,
 ) {
     val state by viewModel.state.collectAsState()
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        uri?.let(viewModel::selectFile)
-    }
-    val artworkPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let(viewModel::selectArtwork)
-    }
+    val picker =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            uri?.let(viewModel::selectFile)
+        }
+    val artworkPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let(viewModel::selectArtwork)
+        }
 
     Scaffold(
         containerColor = SrBg,
@@ -66,7 +68,11 @@ fun UploadScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SrText)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = SrText
+                        )
                     }
                 },
                 actions = {
@@ -126,7 +132,9 @@ fun UploadScreen(
                 Button(
                     onClick = viewModel::upload,
                     enabled = state.canUpload,
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SrPrimary,
                         contentColor = SrOnPrimary,
@@ -134,7 +142,10 @@ fun UploadScreen(
                         disabledContentColor = SrTextMute,
                     ),
                 ) {
-                    Icon(if (state.trackId == null) Icons.AutoMirrored.Filled.Send else Icons.Default.CloudUpload, contentDescription = null)
+                    Icon(
+                        if (state.trackId == null) Icons.AutoMirrored.Filled.Send else Icons.Default.CloudUpload,
+                        contentDescription = null
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(if (state.trackId == null) "Send to Studio" else "Send again")
                 }
@@ -190,7 +201,12 @@ private fun ArtworkPickerCard(
                     color = SrTextDim,
                 )
             }
-            Icon(Icons.Default.Image, contentDescription = null, tint = SrPrimary, modifier = Modifier.size(20.dp))
+            Icon(
+                Icons.Default.Image,
+                contentDescription = null,
+                tint = SrPrimary,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -245,7 +261,12 @@ private fun FilePickerCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = SrPrimary, modifier = Modifier.size(20.dp))
+            Icon(
+                Icons.Default.CloudUpload,
+                contentDescription = null,
+                tint = SrPrimary,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -282,12 +303,16 @@ private fun GenrePicker(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SrEyebrow("Genre")
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(Genre.entries, key = { it.name }) { genre ->
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Genre.entries.forEach { g ->
+                val selected = g == selected
                 SrChip(
-                    label = genre.name,
-                    selected = genre == selected,
-                    onClick = { onSelected(genre) },
+                    label = g.name,
+                    selected = selected,
+                    onClick = { onSelected(g) },
                 )
             }
         }
@@ -300,7 +325,13 @@ private fun UploadStatus(state: UploadUiState) {
         state.isUploading -> {
             SrSurfaceCard {
                 StatusRow(
-                    icon = { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = SrPrimary) },
+                    icon = {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = SrPrimary
+                        )
+                    },
                     text = "Uploading ${state.progressPercent}%",
                 )
                 Spacer(Modifier.height(10.dp))
@@ -312,19 +343,28 @@ private fun UploadStatus(state: UploadUiState) {
                 )
             }
         }
+
         state.isPolling -> StatusRow(
-            icon = { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) },
+            icon = {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp
+                )
+            },
             text = "Processing upload",
         )
+
         state.status == "READY" -> StatusRow(
             icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
             text = "Ready to play",
         )
+
         state.status == "FAILED" -> StatusRow(
             icon = { Icon(Icons.Default.Error, contentDescription = null) },
             text = "Processing failed",
             isError = true,
         )
+
         state.error != null -> StatusRow(
             icon = { Icon(Icons.Default.Error, contentDescription = null) },
             text = state.error,
