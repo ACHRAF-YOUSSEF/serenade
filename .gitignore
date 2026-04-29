@@ -1,9 +1,4 @@
 # ─── Project-specific ────────────────────────────────────────────────────────
-plan.md
-plan-backend.md
-plan-mobile.md
-progress.md
-.github/
 
 # ─── Android / Kotlin Mobile ─────────────────────────────────────────────────
 *.iml
@@ -101,3 +96,18 @@ subtitles/
 *.tmp
 *.swp
 *.swo
+
+*.md
+!/*.md
+!memory-bank/**/*.md
+!.github/instructions/**/*.md
+!.claude/commands/**/*.md
+!.claude/skills/**/*.md
+.claude/settings.local.json
+# Added by code-review-graph
+.code-review-graph/
+.gradle-user-home/
+.codex
+.m2/
+__pycache__/
+.kotlin/

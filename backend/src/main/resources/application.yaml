@@ -1,3 +1,89 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
+  main:
+    banner-mode: "off"
   application:
     name: backend
+  datasource:
+    url: ${POSTGRES_JDBC_URL:}
+    username: ${POSTGRES_USER:}
+    password: ${POSTGRES_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:}
+    password: ${RABBITMQ_PASSWORD:}
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 60MB
+  web:
+    error:
+      include-binding-errors: never
+      include-message: never
+      include-stacktrace: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  structured:
+    format:
+      console: logstash
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+app:
+  internal-api-key: ${INTERNAL_API_KEY:}
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:5173
+      - http://127.0.0.1:3000
+      - http://127.0.0.1:5173
+  rate-limit:
+    trusted-proxies:
+      - 127.0.0.1
+      - ::1
+      - 0:0:0:0:0:0:0:1
+  jwt:
+    secret: ${JWT_SECRET:}
+    access-token-expiry-ms: 900000
+    refresh-token-expiry-ms: 604800000
+  minio:
+    endpoint: ${MINIO_ENDPOINT:}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+    bucket: ${MINIO_BUCKET:serenade}
+    presigned-url-expiry-minutes: 5
