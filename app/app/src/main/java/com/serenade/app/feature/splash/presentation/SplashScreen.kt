@@ -26,7 +26,6 @@ import com.serenade.app.ui.theme.SrBg
 import com.serenade.app.ui.theme.SrBgDeep
 import com.serenade.app.ui.theme.SrCoral
 import com.serenade.app.ui.theme.SrPlum
-import com.serenade.app.ui.theme.SrPrimary
 import com.serenade.app.ui.theme.SrPrimaryHi
 import com.serenade.app.ui.theme.SrText
 import com.serenade.app.ui.theme.SrTextMute
