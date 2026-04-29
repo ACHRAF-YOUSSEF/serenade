@@ -1,6 +1,7 @@
 package com.serenade.app.ui.design
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -47,13 +48,19 @@ fun ArtworkAvatar(
                     end = Offset(1f, 1f),
                 )
             ),
-    ) {
-        // Vinyl ring motif
+        ) {
         Box(
             modifier = Modifier
                 .size(size * 0.72f)
                 .clip(CircleShape)
-                .background(Color.Transparent),
+                .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape),
+        )
+        Box(
+            modifier = Modifier
+                .size(size * 0.32f)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.34f))
+                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape),
         )
         Text(
             text = initials,
@@ -104,9 +111,7 @@ fun SrChip(
             .background(
                 if (selected) SrPrimary else Color.White.copy(alpha = 0.06f)
             )
-            .then(
-                if (!selected) Modifier.padding(1.dp).clip(RoundedCornerShape(100.dp)) else Modifier
-            )
+            .border(1.dp, if (selected) Color.Transparent else SrLineHi, RoundedCornerShape(100.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
@@ -173,5 +178,53 @@ fun SrEyebrow(text: String, modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.labelSmall,
         color = SrTextMute,
         modifier = modifier,
+    )
+}
+
+@Composable
+fun SrScreenBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(SrBg),
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(SrPlum.copy(alpha = 0.42f), Color.Transparent),
+                        center = Offset(0.45f, 0f),
+                        radius = 820f,
+                    )
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(SrCoral.copy(alpha = 0.16f), Color.Transparent),
+                        center = Offset(Float.MAX_VALUE, 0f),
+                        radius = 620f,
+                    )
+                ),
+        )
+        content()
+    }
+}
+
+@Composable
+fun SrSurfaceCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(SrSurface.copy(alpha = 0.78f))
+            .border(1.dp, SrLineHi, RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        content = content,
     )
 }

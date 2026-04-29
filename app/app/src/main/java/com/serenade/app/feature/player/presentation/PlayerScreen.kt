@@ -1,18 +1,24 @@
 package com.serenade.app.feature.player.presentation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.serenade.app.ui.design.ArtworkAvatar
+import com.serenade.app.ui.design.SrScreenBackground
+import com.serenade.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,38 +34,39 @@ fun PlayerScreen(
     val currentCue by viewModel.currentCue.collectAsState()
 
     Scaffold(
+        containerColor = SrBg,
         topBar = {
             TopAppBar(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Collapse")
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Collapse", tint = SrText)
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SrBg),
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            Surface(
-                modifier = Modifier.size(280.dp),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 4.dp,
+        SrScreenBackground(modifier = Modifier.padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.MusicNote,
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                Spacer(modifier = Modifier.weight(1f))
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(280.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(SrSurfaceHi),
+                ) {
+                    ArtworkAvatar(
+                        seed = trackTitle.ifBlank { "Now Playing" },
+                        size = 280.dp,
+                        cornerRadius = 18.dp,
                     )
                     if (!artworkUrl.isNullOrBlank()) {
                         AsyncImage(
@@ -70,35 +77,35 @@ fun PlayerScreen(
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            Text(
-                text = trackTitle,
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = trackArtist,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-            if (state.queueSize > 1) {
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${state.queueIndex + 1} / ${state.queueSize}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = trackTitle,
+                    style = MaterialTheme.typography.displaySmall,
+                    color = SrText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                 )
-            }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = trackArtist,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = SrTextDim,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
+                if (state.queueSize > 1) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${state.queueIndex + 1} / ${state.queueSize}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = SrTextMute,
+                        textAlign = TextAlign.Center,
+                    )
+                }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -126,15 +133,21 @@ fun PlayerScreen(
                 },
                 enabled = durationKnown,
                 modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = SrPrimary,
+                    activeTrackColor = SrPrimary,
+                    inactiveTrackColor = SrSurfaceHi,
+                ),
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(formatMs(state.positionMs), style = MaterialTheme.typography.labelSmall)
+                Text(formatMs(state.positionMs), style = MaterialTheme.typography.labelSmall, color = SrTextMute)
                 Text(
                     text = if (durationKnown) formatMs(effectiveDurationMs) else "--:--",
                     style = MaterialTheme.typography.labelSmall,
+                    color = SrTextMute,
                 )
             }
 
@@ -144,6 +157,7 @@ fun PlayerScreen(
                 Text(
                     text = currentCue ?: "",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = SrText,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -170,6 +184,10 @@ fun PlayerScreen(
                 FilledIconButton(
                     onClick = viewModel::togglePlayPause,
                     modifier = Modifier.size(64.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = SrPrimary,
+                        contentColor = SrOnPrimary,
+                    ),
                 ) {
                     Icon(
                         imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -185,7 +203,8 @@ fun PlayerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -53,7 +54,15 @@ fun MiniPlayerBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF1F1530).copy(alpha = 0.92f))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                SrSurfaceHi.copy(alpha = 0.94f),
+                                SrSurface.copy(alpha = 0.94f),
+                            )
+                        )
+                    )
+                    .border(1.dp, SrLineHi, RoundedCornerShape(14.dp))
                     .clickable(onClick = onBarClick)
                     .padding(8.dp),
             ) {

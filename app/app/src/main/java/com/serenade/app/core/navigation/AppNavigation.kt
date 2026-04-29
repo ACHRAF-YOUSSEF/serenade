@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -262,46 +263,54 @@ private fun SrBottomNav(
     navController: NavController,
     currentRoute: String?,
 ) {
-    NavigationBar(
-        containerColor = SrBgDeep,
-        tonalElevation = 0.dp,
-    ) {
-        TABS.forEach { tab ->
-            val selected = currentRoute == tab.route
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    if (!selected) {
-                        navController.navigate(tab.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                icon = {
-                    Icon(
-                        imageVector = if (selected) tab.iconSelected else tab.iconDefault,
-                        contentDescription = tab.label,
-                        modifier = Modifier.size(22.dp),
-                    )
-                },
-                label = {
-                    Text(
-                        text = tab.label,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Default,
-                        ),
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = SrPrimary,
-                    selectedTextColor = SrPrimary,
-                    indicatorColor = SrSurfaceHi,
-                    unselectedIconColor = SrTextMute,
-                    unselectedTextColor = SrTextMute,
-                ),
+    Box(
+        modifier = Modifier.background(
+            Brush.verticalGradient(
+                listOf(Color.Transparent, SrBgDeep.copy(alpha = 0.86f), SrBgDeep)
             )
+        )
+    ) {
+        NavigationBar(
+            containerColor = Color.Transparent,
+            tonalElevation = 0.dp,
+        ) {
+            TABS.forEach { tab ->
+                val selected = currentRoute == tab.route
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = {
+                        if (!selected) {
+                            navController.navigate(tab.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = if (selected) tab.iconSelected else tab.iconDefault,
+                            contentDescription = tab.label,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = tab.label,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Default,
+                            ),
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = SrPrimary,
+                        selectedTextColor = SrPrimary,
+                        indicatorColor = SrSurfaceHi,
+                        unselectedIconColor = SrTextMute,
+                        unselectedTextColor = SrTextMute,
+                    ),
+                )
+            }
         }
     }
 }

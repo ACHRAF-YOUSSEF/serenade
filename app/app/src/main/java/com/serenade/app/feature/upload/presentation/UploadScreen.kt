@@ -3,6 +3,7 @@ package com.serenade.app.feature.upload.presentation
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,6 +28,12 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.serenade.app.core.database.Genre
 import com.serenade.app.feature.upload.data.UploadFileInfo
+import com.serenade.app.ui.design.ArtworkAvatar
+import com.serenade.app.ui.design.SrChip
+import com.serenade.app.ui.design.SrEyebrow
+import com.serenade.app.ui.design.SrScreenBackground
+import com.serenade.app.ui.design.SrSurfaceCard
+import com.serenade.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,72 +50,65 @@ fun UploadScreen(
     }
 
     Scaffold(
+        containerColor = SrBg,
         topBar = {
             TopAppBar(
-                title = { Text("Upload") },
+                title = { Text("Studio", style = MaterialTheme.typography.displaySmall, color = SrText) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SrText)
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SrBg),
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            FilePickerCard(
-                file = state.selectedFile,
-                onPickFile = { picker.launch(AUDIO_MIME_TYPES) },
-            )
-
-            ArtworkPickerCard(
-                artworkUri = state.artworkUri,
-                onPickArtwork = { artworkPicker.launch("image/*") },
-            )
-
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = viewModel::updateTitle,
-                label = { Text("Title") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = state.artist,
-                onValueChange = viewModel::updateArtist,
-                label = { Text("Artist") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = state.album,
-                onValueChange = viewModel::updateAlbum,
-                label = { Text("Album") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            GenrePicker(
-                selected = state.genre,
-                onSelected = viewModel::updateGenre,
-            )
-
-            UploadStatus(state = state)
-
-            Button(
-                onClick = viewModel::upload,
-                enabled = state.canUpload,
-                modifier = Modifier.fillMaxWidth(),
+        SrScreenBackground(modifier = Modifier.padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Icon(Icons.Default.CloudUpload, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(if (state.trackId == null) "Upload" else "Upload again")
+                SrEyebrow(text = "Upload to studio", modifier = Modifier.padding(top = 6.dp))
+                FilePickerCard(
+                    file = state.selectedFile,
+                    onPickFile = { picker.launch(AUDIO_MIME_TYPES) },
+                )
+
+                ArtworkPickerCard(
+                    artworkUri = state.artworkUri,
+                    onPickArtwork = { artworkPicker.launch("image/*") },
+                )
+
+                UploadTextField(state.title, viewModel::updateTitle, "Title")
+                UploadTextField(state.artist, viewModel::updateArtist, "Artist")
+                UploadTextField(state.album, viewModel::updateAlbum, "Album")
+
+                GenrePicker(
+                    selected = state.genre,
+                    onSelected = viewModel::updateGenre,
+                )
+
+                UploadStatus(state = state)
+
+                Button(
+                    onClick = viewModel::upload,
+                    enabled = state.canUpload,
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SrPrimary,
+                        contentColor = SrOnPrimary,
+                        disabledContainerColor = SrSurfaceHi,
+                        disabledContentColor = SrTextMute,
+                    ),
+                ) {
+                    Icon(Icons.Default.CloudUpload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (state.trackId == null) "Upload" else "Upload again")
+                }
+                Spacer(Modifier.height(12.dp))
             }
         }
     }
@@ -119,7 +119,7 @@ private fun ArtworkPickerCard(
     artworkUri: Uri?,
     onPickArtwork: () -> Unit,
 ) {
-    OutlinedCard(
+    SrSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onPickArtwork),
@@ -140,20 +140,21 @@ private fun ArtworkPickerCard(
                         .clip(MaterialTheme.shapes.extraSmall),
                 )
             } else {
-                Icon(Icons.Default.Image, contentDescription = null)
+                ArtworkAvatar(seed = "Artwork", size = 42.dp, cornerRadius = 8.dp)
             }
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (artworkUri != null) "Artwork selected" else "Add artwork (optional)",
                     style = MaterialTheme.typography.titleMedium,
+                    color = SrText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = "JPEG, PNG, WEBP · max 5 MB",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = SrTextDim,
                 )
             }
         }
@@ -165,7 +166,7 @@ private fun FilePickerCard(
     file: UploadFileInfo?,
     onPickFile: () -> Unit,
 ) {
-    OutlinedCard(
+    SrSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onPickFile),
@@ -176,19 +177,28 @@ private fun FilePickerCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Default.MusicNote, contentDescription = null)
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(SrSurfaceHi),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = SrPrimary)
+            }
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = file?.name ?: "Choose audio file",
                     style = MaterialTheme.typography.titleMedium,
+                    color = SrText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = file?.let { formatFileMeta(it) } ?: "MP3, FLAC, OGG, WAV, M4A, AAC",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = SrTextDim,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -198,18 +208,43 @@ private fun FilePickerCard(
 }
 
 @Composable
+private fun UploadTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = SrText,
+            unfocusedTextColor = SrText,
+            focusedLabelColor = SrPrimary,
+            unfocusedLabelColor = SrTextMute,
+            focusedBorderColor = SrPrimary,
+            unfocusedBorderColor = SrLineHi,
+            focusedContainerColor = SrSurface.copy(alpha = 0.6f),
+            unfocusedContainerColor = SrSurface.copy(alpha = 0.6f),
+        ),
+    )
+}
+
+@Composable
 private fun GenrePicker(
     selected: Genre,
     onSelected: (Genre) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Genre", style = MaterialTheme.typography.labelLarge)
+        SrEyebrow("Genre")
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(Genre.entries, key = { it.name }) { genre ->
-                FilterChip(
+                SrChip(
+                    label = genre.name,
                     selected = genre == selected,
                     onClick = { onSelected(genre) },
-                    label = { Text(genre.name) },
                 )
             }
         }
@@ -223,10 +258,13 @@ private fun UploadStatus(state: UploadUiState) {
             LinearProgressIndicator(
                 progress = { state.progressPercent / 100f },
                 modifier = Modifier.fillMaxWidth(),
+                color = SrPrimary,
+                trackColor = SrSurfaceHi,
             )
             Text(
                 text = "Uploading ${state.progressPercent}%",
                 style = MaterialTheme.typography.bodyMedium,
+                color = SrTextDim,
             )
         }
         state.isPolling -> StatusRow(
@@ -256,7 +294,7 @@ private fun StatusRow(
     text: String,
     isError: Boolean = false,
 ) {
-    val color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val color = if (isError) SrCoral else SrPrimary
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
