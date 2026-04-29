@@ -38,7 +38,6 @@ google-services.json
 
 # ─── Spring Boot / Maven / Java ──────────────────────────────────────────────
 target/
-!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 *.jar
@@ -84,6 +83,13 @@ docker-compose.override.yml
 *.key
 *.crt
 secrets/
+
+# ─── Python ──────────────────────────────────────────────────────────────────
+.venv/
+venv/
+*.pyc
+*.pyo
+.pytest_cache/
 
 # ─── FFmpeg / Whisper worker outputs ─────────────────────────────────────────
 *.hls/

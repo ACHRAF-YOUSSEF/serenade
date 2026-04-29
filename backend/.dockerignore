@@ -1,5 +1,32 @@
+# Build artifacts
 target/
+
+# Tests (not needed at runtime)
 src/test/
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Local Maven cache (fetched fresh during build)
+.m2/
+
+# Secrets — never send to daemon
+.env
+.env.*
+
+# Docs / meta
 *.md
-.git/
 .gitignore
+.gitattributes
+.dockerignore
+
+# Git
+.git/
+
+# Docker Compose (dev-only)
+compose.yml
+docker-compose*.yml
