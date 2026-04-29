@@ -1,6 +1,6 @@
 # Active Context
 
-Current focus: Post-TASK042 — Theme preview colors fixed.
+Current focus: Post-TASK043 — Signup code boxes and theme setup complete.
 
 Completed build slices:
 - Mobile M1: build wiring stable.
@@ -54,6 +54,7 @@ Latest email auth update: Backend now has Spring Mail + Thymeleaf email template
 Latest You/Flyway fix: `V2__auth_email_codes.sql` was restored to its originally applied Flyway checksum and `V3__relax_auth_code_hash_index.sql` now carries the follow-up auth-code index relaxation. You screen no longer forces scrolling on fitted content, removing the visible right-edge scroll thumb; `SrScreenBackground` uses finite `Offset(1200f, 0f)` instead of `Float.MAX_VALUE` to avoid gradient edge artifacts. Verified `sh mvnw -DskipTests package`, `./gradlew :app:compileDebugKotlin`, and `git diff --check`. Sandbox `spring-boot:run` could not connect to local Postgres because socket creation is blocked.
 Latest playback lifecycle fix: Logout stops playback before clearing auth state, clears current/persisted playback queues, and resets mini-player state. `SerenadePlayerService` handles task removal by stopping ExoPlayer, clearing media items, removing foreground notification, and stopping itself. `MainActivity` stops playback when explicitly finishing. Verified `./gradlew :app:compileDebugKotlin`.
 Latest theme preview fix: You screen theme options now build preview swatches from `colorsFor(choice)` instead of current live palette values. This keeps Midnight Velvet and Aurora Pulse previews distinct after either theme is selected. Verified `./gradlew :app:compileDebugKotlin`.
+Latest signup setup polish: `DigitCodeField` provides five separated numeric boxes for verification/reset code entry. Register verification, unverified-login verification, and reset password use it. Signup now has step 3/3 after email verification with an optional persisted theme picker; Skip or Tune & enter moves to home. Verified `./gradlew :app:compileDebugKotlin`.
 Known connectivity limitation: physical devices still need `SERENADE_API_BASE_URL=http://<host-lan-ip>:8080/` when building/installing the app.
 Known artwork limitation: artwork presigned URLs expire in ≤15 min; app re-fetches fresh URLs on next sync. Coil caches in memory/disk so expiry only affects cold loads.
 Latest artwork fix: UI should not use stored MinIO presigned artwork URLs directly. Backend exposes stable `GET /artwork/{trackId}` and Android normalizes nonblank artwork markers to `${BuildConfig.API_BASE_URL}/artwork/{trackId}` in `stableArtworkUrl(...)`. This lets Coil load uploaded artwork from the same backend host used by the phone/emulator and avoids expired/direct MinIO URLs.

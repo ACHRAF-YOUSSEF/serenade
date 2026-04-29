@@ -75,7 +75,6 @@ private const val ROUTE_PLAYER   = "player"
 private const val ROUTE_PLAYLIST_DETAIL = "playlist"
 private const val ARG_PLAYLIST_ID = "playlistId"
 
-// Bottom tabs visible post-login
 private data class NavTab(
     val route: String,
     val label: String,
@@ -203,6 +202,8 @@ fun AppNavigation(
                         }
                     },
                     onNavigateToLogin = { navController.popBackStack() },
+                    selectedTheme = selectedTheme,
+                    onThemeSelected = onThemeSelected,
                     viewModel = hiltViewModel(),
                 )
             }

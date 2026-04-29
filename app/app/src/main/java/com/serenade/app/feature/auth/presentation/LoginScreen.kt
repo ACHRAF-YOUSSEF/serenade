@@ -251,12 +251,9 @@ private fun VerifyLoginFields(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    OutlinedTextField(
+    DigitCodeField(
         value = code,
         onValueChange = onCodeChange,
-        label = { Text("Verification code") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
 
@@ -306,12 +303,9 @@ private fun ResetPasswordFields(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    OutlinedTextField(
+    DigitCodeField(
         value = code,
         onValueChange = onCodeChange,
-        label = { Text("Reset code") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
 

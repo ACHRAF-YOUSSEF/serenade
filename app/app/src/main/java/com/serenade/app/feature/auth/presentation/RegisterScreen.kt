@@ -1,6 +1,9 @@
 package com.serenade.app.feature.auth.presentation
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,15 +14,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.serenade.app.ui.theme.SerenadeThemeChoice
+import com.serenade.app.ui.theme.colorsFor
 
 @Composable
 fun RegisterScreen(
     onSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    selectedTheme: SerenadeThemeChoice,
+    onThemeSelected: (SerenadeThemeChoice) -> Unit,
     viewModel: AuthViewModel,
 ) {
     val state by viewModel.state.collectAsState()
@@ -35,6 +44,11 @@ fun RegisterScreen(
     LaunchedEffect(state) {
         when (state) {
             is AuthUiState.Success -> {
+                if (step == 2) {
+                    step = 3
+                    viewModel.resetState()
+                    return@LaunchedEffect
+                }
                 viewModel.resetState()
                 onSuccess()
             }
@@ -66,21 +80,21 @@ fun RegisterScreen(
                 }
             }
             Text(
-                text = "Step $step / 2",
+                text = "Step $step / 3",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
 
         LinearProgressIndicator(
-            progress = { step / 2f },
+            progress = { step / 3f },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, bottom = 28.dp),
         )
 
-        if (step == 1) {
-            RegisterDetailsStep(
+        when (step) {
+            1 -> RegisterDetailsStep(
                 username = username,
                 onUsernameChange = { username = it },
                 email = email,
@@ -90,13 +104,16 @@ fun RegisterScreen(
                 passwordVisible = passwordVisible,
                 onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
             )
-        } else {
-            VerifyEmailStep(
+            2 -> VerifyEmailStep(
                 email = pendingEmail,
                 code = code,
                 onCodeChange = { value -> code = value.filter(Char::isDigit).take(5) },
                 onResend = { viewModel.resendVerification(pendingEmail) },
                 loading = state is AuthUiState.Loading,
+            )
+            3 -> SetupPreferencesStep(
+                selectedTheme = selectedTheme,
+                onThemeSelected = onThemeSelected,
             )
         }
 
@@ -115,11 +132,13 @@ fun RegisterScreen(
             onClick = {
                 if (step == 1) {
                     viewModel.register(username.trim(), email.trim(), password)
-                } else {
+                } else if (step == 2) {
                     viewModel.verifyEmail(pendingEmail, code)
+                } else {
+                    onSuccess()
                 }
             },
-            enabled = state !is AuthUiState.Loading && (step == 1 || code.length == 5),
+            enabled = state !is AuthUiState.Loading && (step != 2 || code.length == 5),
             modifier = Modifier.fillMaxWidth(),
         ) {
             if (state is AuthUiState.Loading) {
@@ -128,6 +147,10 @@ fun RegisterScreen(
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Verify account")
+            } else if (step == 3) {
+                Icon(Icons.Default.Check, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Tune & enter")
             } else {
                 Text("Continue")
             }
@@ -135,8 +158,14 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        TextButton(onClick = onNavigateToLogin) {
-            Text("Already have an account? Log in")
+        if (step == 3) {
+            TextButton(onClick = onSuccess) {
+                Text("Skip")
+            }
+        } else {
+            TextButton(onClick = onNavigateToLogin) {
+                Text("Already have an account? Log in")
+            }
         }
     }
 }
@@ -217,12 +246,9 @@ private fun VerifyEmailStep(
         modifier = Modifier.padding(top = 8.dp, bottom = 28.dp),
     )
 
-    OutlinedTextField(
+    DigitCodeField(
         value = code,
         onValueChange = onCodeChange,
-        label = { Text("Verification code") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
 
@@ -232,5 +258,71 @@ private fun VerifyEmailStep(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text("Resend code")
+    }
+}
+
+@Composable
+private fun SetupPreferencesStep(
+    selectedTheme: SerenadeThemeChoice,
+    onThemeSelected: (SerenadeThemeChoice) -> Unit,
+) {
+    Text("Tune the room to your taste.", style = MaterialTheme.typography.headlineMedium)
+    Text(
+        text = "Choose a visual theme now. You can change it later from You.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+    )
+
+    SerenadeThemeChoice.entries.forEach { choice ->
+        SignupThemeOption(
+            choice = choice,
+            selected = selectedTheme == choice,
+            onClick = { onThemeSelected(choice) },
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+    }
+}
+
+@Composable
+private fun SignupThemeOption(
+    choice: SerenadeThemeChoice,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val preview = colorsFor(choice)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(if (selected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
+            .border(
+                width = 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                shape = MaterialTheme.shapes.medium,
+            )
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+            listOf(preview.primary, preview.plum, preview.coral).forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(color)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, androidx.compose.foundation.shape.CircleShape),
+                )
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(choice.label, style = MaterialTheme.typography.titleSmall)
+            Text(choice.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (selected) {
+            Text("On", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        }
     }
 }

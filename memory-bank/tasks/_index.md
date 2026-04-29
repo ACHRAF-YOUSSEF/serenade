@@ -5,6 +5,7 @@
 ## Pending
 
 ## Completed
+- [TASK043] Signup Code Boxes and Theme Setup - Completed on 2026-04-29
 - [TASK042] Theme Preview Colors - Completed on 2026-04-29
 - [TASK041] Stop Media on Logout and App Close - Completed on 2026-04-29
 - [TASK040] You UI and Flyway Checksum Fix - Completed on 2026-04-29
