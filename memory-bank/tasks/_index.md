@@ -1,11 +1,13 @@
 # Tasks Index
 
 ## In Progress
-- [TASK036] Serenade Handoff Design Implementation
 
 ## Pending
 
 ## Completed
+- [TASK038] Upload Studio and Downloads Design - Completed on 2026-04-29
+- [TASK037] Splash You Theme Logo - Completed on 2026-04-29
+- [TASK036] Serenade Handoff Design Implementation - Completed on 2026-04-29
 - [TASK035] Collaboration Docs Tracking - Completed on 2026-04-26
 - [TASK034] Persisted Playback Queue and History - Completed on 2026-04-26
 - [TASK033] HLS Seekability Fix - Completed on 2026-04-26

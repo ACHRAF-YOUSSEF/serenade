@@ -7,14 +7,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.serenade.app.core.preferences.ThemePreferenceStore
 import com.serenade.app.core.navigation.AppNavigation
 import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.ui.theme.AppTheme
+import com.serenade.app.ui.theme.SerenadeThemeChoice
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -27,10 +34,17 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermissionIfNeeded()
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            val themeStore = remember { ThemePreferenceStore(applicationContext) }
+            val selectedTheme by themeStore.selectedTheme.collectAsState(initial = SerenadeThemeChoice.Midnight)
+            val scope = rememberCoroutineScope()
+            AppTheme(themeChoice = selectedTheme) {
                 AppNavigation(
                     authRepository = authRepository,
                     playerController = playerController,
+                    selectedTheme = selectedTheme,
+                    onThemeSelected = { choice ->
+                        scope.launch { themeStore.setTheme(choice) }
+                    },
                 )
             }
         }

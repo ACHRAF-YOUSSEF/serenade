@@ -31,11 +31,13 @@ import com.serenade.app.feature.player.presentation.PlayerScreen
 import com.serenade.app.feature.playlist.presentation.LibraryScreen
 import com.serenade.app.feature.playlist.presentation.PlaylistDetailScreen
 import com.serenade.app.feature.search.presentation.SearchScreen
+import com.serenade.app.feature.splash.presentation.SplashScreen
 import com.serenade.app.feature.track.data.stableArtworkUrl
 import com.serenade.app.feature.track.data.entity.TrackEntity
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
 import com.serenade.app.feature.upload.presentation.UploadScreen
+import com.serenade.app.feature.you.presentation.YouScreen
 import com.serenade.app.ui.theme.*
 import java.io.File
 import java.time.Instant
@@ -62,11 +64,13 @@ private fun TrackEntity.playbackUri(): String? =
 
 private const val ROUTE_LOGIN    = "login"
 private const val ROUTE_REGISTER = "register"
+private const val ROUTE_SPLASH   = "splash"
 private const val ROUTE_HOME     = "home"
 private const val ROUTE_SEARCH   = "search"
 private const val ROUTE_LIBRARY  = "library"
 private const val ROUTE_DOWNLOADS = "downloads"
 private const val ROUTE_UPLOAD   = "upload"
+private const val ROUTE_YOU      = "you"
 private const val ROUTE_PLAYER   = "player"
 private const val ROUTE_PLAYLIST_DETAIL = "playlist"
 private const val ARG_PLAYLIST_ID = "playlistId"
@@ -84,7 +88,7 @@ private val TABS = listOf(
     NavTab(ROUTE_SEARCH,  "Search",  Icons.Filled.Search,      Icons.Outlined.Search),
     NavTab(ROUTE_LIBRARY, "Library", Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
     NavTab(ROUTE_UPLOAD,  "Studio",  Icons.Filled.CloudUpload,  Icons.Outlined.CloudUpload),
-    NavTab(ROUTE_DOWNLOADS, "You",   Icons.Filled.Person,       Icons.Outlined.Person),
+    NavTab(ROUTE_YOU,     "You",     Icons.Filled.Person,       Icons.Outlined.Person),
 )
 
 private val TAB_ROUTES = TABS.map { it.route }.toSet()
@@ -93,9 +97,11 @@ private val TAB_ROUTES = TABS.map { it.route }.toSet()
 fun AppNavigation(
     authRepository: AuthRepository,
     playerController: PlayerController,
+    selectedTheme: SerenadeThemeChoice,
+    onThemeSelected: (SerenadeThemeChoice) -> Unit,
 ) {
     val navController = rememberNavController()
-    val startDestination = if (authRepository.isLoggedIn()) ROUTE_HOME else ROUTE_LOGIN
+    val postSplashDestination = if (authRepository.isLoggedIn()) ROUTE_HOME else ROUTE_LOGIN
     val playbackState by playerController.state.collectAsState()
 
     var playbackQueue by remember { mutableStateOf<List<TrackEntity>>(emptyList()) }
@@ -166,9 +172,18 @@ fun AppNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = startDestination,
+            startDestination = ROUTE_SPLASH,
             modifier = Modifier.padding(innerPadding),
         ) {
+            composable(ROUTE_SPLASH) {
+                SplashScreen(
+                    onFinished = {
+                        navController.navigate(postSplashDestination) {
+                            popUpTo(ROUTE_SPLASH) { inclusive = true }
+                        }
+                    },
+                )
+            }
             composable(ROUTE_LOGIN) {
                 LoginScreen(
                     onSuccess = {
@@ -227,6 +242,20 @@ fun AppNavigation(
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = hiltViewModel(),
+                )
+            }
+            composable(ROUTE_YOU) {
+                YouScreen(
+                    selectedTheme = selectedTheme,
+                    onThemeSelected = onThemeSelected,
+                    onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
+                    onLogout = {
+                        authRepository.logout()
+                        navController.navigate(ROUTE_LOGIN) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
             composable(ROUTE_UPLOAD) {

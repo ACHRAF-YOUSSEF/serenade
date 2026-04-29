@@ -4,36 +4,41 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val SerenadeColorScheme = darkColorScheme(
-    primary             = SrPrimary,
-    onPrimary           = SrOnPrimary,
-    primaryContainer    = SrPlum,
-    onPrimaryContainer  = SrText,
-    secondary           = SrCoral,
-    onSecondary         = SrText,
-    secondaryContainer  = SrIndigo,
-    onSecondaryContainer = SrText,
-    tertiary            = SrAmber,
-    onTertiary          = SrOnPrimary,
-    tertiaryContainer   = SrSurface,
-    onTertiaryContainer = SrTextDim,
-    background          = SrBg,
-    onBackground        = SrText,
-    surface             = SrSurface,
-    onSurface           = SrText,
-    surfaceVariant      = SrSurfaceHi,
-    onSurfaceVariant    = SrTextDim,
-    surfaceTint         = SrPlum,
-    outline             = SrTextMute,
-    outlineVariant      = SrTextOff,
-    error               = SrCoral,
-    onError             = SrOnPrimary,
-)
-
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
+fun AppTheme(
+    themeChoice: SerenadeThemeChoice = SerenadeThemeChoice.Midnight,
+    content: @Composable () -> Unit,
+) {
+    val sr = colorsFor(themeChoice)
+    SrPaletteState.colors = sr
+    val colorScheme = darkColorScheme(
+        primary = sr.primary,
+        onPrimary = sr.onPrimary,
+        primaryContainer = sr.plum,
+        onPrimaryContainer = sr.text,
+        secondary = sr.coral,
+        onSecondary = sr.text,
+        secondaryContainer = sr.indigo,
+        onSecondaryContainer = sr.text,
+        tertiary = sr.amber,
+        onTertiary = sr.onPrimary,
+        tertiaryContainer = sr.surface,
+        onTertiaryContainer = sr.textDim,
+        background = sr.bg,
+        onBackground = sr.text,
+        surface = sr.surface,
+        onSurface = sr.text,
+        surfaceVariant = sr.surfaceHi,
+        onSurfaceVariant = sr.textDim,
+        surfaceTint = sr.plum,
+        outline = sr.textMute,
+        outlineVariant = sr.textOff,
+        error = sr.coral,
+        onError = sr.onPrimary,
+    )
+
     MaterialTheme(
-        colorScheme = SerenadeColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content,
     )

@@ -4,14 +4,17 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Error
@@ -22,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,10 +57,24 @@ fun UploadScreen(
         containerColor = SrBg,
         topBar = {
             TopAppBar(
-                title = { Text("Studio", style = MaterialTheme.typography.displaySmall, color = SrText) },
+                title = {
+                    Text(
+                        "Upload to Studio",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = SrText,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SrText)
+                    }
+                },
+                actions = {
+                    TextButton(
+                        enabled = state.canUpload,
+                        onClick = viewModel::upload,
+                    ) {
+                        Text("Send", color = if (state.canUpload) SrPrimary else SrTextMute)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SrBg),
@@ -71,7 +89,19 @@ fun UploadScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                SrEyebrow(text = "Upload to studio", modifier = Modifier.padding(top = 6.dp))
+                Column(modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)) {
+                    Text(
+                        text = "A track of your own.",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = SrText,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Choose audio, artwork, and release details. Serenade will transcode it for streaming.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SrTextDim,
+                    )
+                }
                 FilePickerCard(
                     file = state.selectedFile,
                     onPickFile = { picker.launch(AUDIO_MIME_TYPES) },
@@ -104,9 +134,9 @@ fun UploadScreen(
                         disabledContentColor = SrTextMute,
                     ),
                 ) {
-                    Icon(Icons.Default.CloudUpload, contentDescription = null)
+                    Icon(if (state.trackId == null) Icons.AutoMirrored.Filled.Send else Icons.Default.CloudUpload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (state.trackId == null) "Upload" else "Upload again")
+                    Text(if (state.trackId == null) "Send to Studio" else "Send again")
                 }
                 Spacer(Modifier.height(12.dp))
             }
@@ -119,16 +149,20 @@ private fun ArtworkPickerCard(
     artworkUri: Uri?,
     onPickArtwork: () -> Unit,
 ) {
-    SrSurfaceCard(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SrSurface.copy(alpha = 0.78f))
+            .border(1.dp, SrLineHi, RoundedCornerShape(14.dp))
             .clickable(onClick = onPickArtwork),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (artworkUri != null) {
                 AsyncImage(
@@ -142,7 +176,6 @@ private fun ArtworkPickerCard(
             } else {
                 ArtworkAvatar(seed = "Artwork", size = 42.dp, cornerRadius = 8.dp)
             }
-            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (artworkUri != null) "Artwork selected" else "Add artwork (optional)",
@@ -157,6 +190,7 @@ private fun ArtworkPickerCard(
                     color = SrTextDim,
                 )
             }
+            Icon(Icons.Default.Image, contentDescription = null, tint = SrPrimary, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -166,9 +200,16 @@ private fun FilePickerCard(
     file: UploadFileInfo?,
     onPickFile: () -> Unit,
 ) {
-    SrSurfaceCard(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(SrSurface.copy(alpha = 0.88f), SrSurfaceHi.copy(alpha = 0.72f))
+                )
+            )
+            .border(1.dp, SrLineHi, RoundedCornerShape(14.dp))
             .clickable(onClick = onPickFile),
     ) {
         Row(
@@ -176,6 +217,7 @@ private fun FilePickerCard(
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box(
                 modifier = Modifier
@@ -186,8 +228,8 @@ private fun FilePickerCard(
             ) {
                 Icon(Icons.Default.MusicNote, contentDescription = null, tint = SrPrimary)
             }
-            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
+                SrEyebrow(if (file == null) "Audio source" else "Selected audio")
                 Text(
                     text = file?.name ?: "Choose audio file",
                     style = MaterialTheme.typography.titleMedium,
@@ -203,6 +245,7 @@ private fun FilePickerCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = SrPrimary, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -255,17 +298,19 @@ private fun GenrePicker(
 private fun UploadStatus(state: UploadUiState) {
     when {
         state.isUploading -> {
-            LinearProgressIndicator(
-                progress = { state.progressPercent / 100f },
-                modifier = Modifier.fillMaxWidth(),
-                color = SrPrimary,
-                trackColor = SrSurfaceHi,
-            )
-            Text(
-                text = "Uploading ${state.progressPercent}%",
-                style = MaterialTheme.typography.bodyMedium,
-                color = SrTextDim,
-            )
+            SrSurfaceCard {
+                StatusRow(
+                    icon = { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = SrPrimary) },
+                    text = "Uploading ${state.progressPercent}%",
+                )
+                Spacer(Modifier.height(10.dp))
+                LinearProgressIndicator(
+                    progress = { state.progressPercent / 100f },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = SrPrimary,
+                    trackColor = SrSurfaceHi,
+                )
+            }
         }
         state.isPolling -> StatusRow(
             icon = { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) },

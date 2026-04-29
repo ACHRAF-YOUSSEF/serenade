@@ -1,6 +1,6 @@
 # TASK036 - Serenade Handoff Design Implementation
 
-Status: In Progress
+Status: Completed
 
 ## Original Request
 Read `serenade-handoff.zip` and README inside. Implement `Serenade.html`, prioritize updating the existing design over new pages, record every update in relevant markdown files, and ask before adding new functionality.
@@ -21,9 +21,11 @@ No new functionality will be added without user confirmation.
 | Status | Item |
 | --- | --- |
 | Done | Read memory bank and handoff bundle |
-| In Progress | Update existing Compose design to match Serenade prototype |
-| Pending | Verify Android compile/check |
-| Pending | Update memory docs and complete task |
+| Done | Update existing Compose design to match Serenade prototype |
+| Done | Verify Android compile/check |
+| Done | Update memory docs and complete task |
 
 ## Progress Log
 - 2026-04-29: Read all memory bank files, handoff README, `Serenade.html`, and imported prototype files. Confirmed target should be existing Android Compose UI, not new HTML/pages.
+- 2026-04-29: Updated existing Compose design surfaces only: shared Serenade artwork/card/screen background helpers, Search screen, Library screen, Upload/Studio screen, full player, mini player, and bottom navigation visuals. No new routes or user-facing functionality added.
+- 2026-04-29: Verified `./gradlew --gradle-user-home ../.gradle-user-home :app:compileDebugKotlin` and `git diff --check`.
