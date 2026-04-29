@@ -21,7 +21,10 @@ class DownloadViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun deleteDownload(trackId: String) {
-        if (playerController.state.value.currentTrackId == trackId) {
+        // Check both the cached state AND the ExoPlayer directly to handle timing edges.
+        val playingId = playerController.state.value.currentTrackId
+            ?: playerController.player.currentMediaItem?.mediaId
+        if (playingId == trackId) {
             playerController.stopPlayback(clearPersistedQueue = true)
         }
         viewModelScope.launch {

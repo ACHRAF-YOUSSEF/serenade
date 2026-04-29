@@ -106,7 +106,7 @@ fun AppNavigation(
     val navController = rememberNavController()
     val postSplashDestination = if (authRepository.isLoggedIn()) ROUTE_HOME else ROUTE_LOGIN
     val playbackState by playerController.state.collectAsState()
-    val isOnline by networkMonitor.isOnline.collectAsState(initial = true)
+    val isOnline by networkMonitor.isOnline.collectAsState()
     val scope = rememberCoroutineScope()
 
     var playbackQueue by remember { mutableStateOf<List<TrackEntity>>(emptyList()) }
