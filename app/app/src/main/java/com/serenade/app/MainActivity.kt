@@ -1,6 +1,8 @@
 package com.serenade.app
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -26,10 +28,14 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var authRepository: AuthRepository
 
-    @Inject lateinit var authRepository: AuthRepository
-    @Inject lateinit var playerController: PlayerController
-    @Inject lateinit var networkMonitor: NetworkMonitor
+    @Inject
+    lateinit var playerController: PlayerController
+
+    @Inject
+    lateinit var networkMonitor: NetworkMonitor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +53,11 @@ class MainActivity : ComponentActivity() {
                     selectedTheme = selectedTheme,
                     onThemeSelected = { choice ->
                         scope.launch { themeStore.setTheme(choice) }
+                        val isAuroraTheme = choice == SerenadeThemeChoice.Aurora
+                        updateAppIcon(
+                            context = this@MainActivity,
+                            isAuroraTheme = isAuroraTheme
+                        )
                     },
                 )
             }
@@ -63,7 +74,7 @@ class MainActivity : ComponentActivity() {
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
+            != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
                 this,
@@ -71,5 +82,37 @@ class MainActivity : ComponentActivity() {
                 0,
             )
         }
+    }
+}
+
+fun updateAppIcon(context: Context, isAuroraTheme: Boolean) {
+    val packageManager = context.packageManager
+    val packageName = context.packageName
+
+    val midnightComponent = ComponentName(packageName, "$packageName.MainActivityMidnight")
+    val auroraComponent = ComponentName(packageName, "$packageName.MainActivityAurora")
+
+    if (isAuroraTheme) {
+        packageManager.setComponentEnabledSetting(
+            auroraComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        packageManager.setComponentEnabledSetting(
+            midnightComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    } else {
+        packageManager.setComponentEnabledSetting(
+            midnightComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        packageManager.setComponentEnabledSetting(
+            auroraComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
     }
 }
