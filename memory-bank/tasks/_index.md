@@ -1,6 +1,7 @@
 # Tasks Index
 
 ## In Progress
+- [TASK036] Serenade Handoff Design Implementation
 
 ## Pending
 
