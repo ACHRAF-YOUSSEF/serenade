@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.serenade.app.core.database.Genre
+import com.serenade.app.core.network.NetworkMonitor
 import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.auth.presentation.LoginScreen
 import com.serenade.app.feature.auth.presentation.RegisterScreen
@@ -38,9 +39,11 @@ import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import com.serenade.app.feature.track.presentation.TrackListScreen
 import com.serenade.app.feature.upload.presentation.UploadScreen
 import com.serenade.app.feature.you.presentation.YouScreen
+import com.serenade.app.ui.design.OfflineBanner
 import com.serenade.app.ui.theme.*
 import java.io.File
 import java.time.Instant
+import kotlinx.coroutines.launch
 
 private fun TrackResponse.toEntity() = TrackEntity(
     id = id,
@@ -96,12 +99,15 @@ private val TAB_ROUTES = TABS.map { it.route }.toSet()
 fun AppNavigation(
     authRepository: AuthRepository,
     playerController: PlayerController,
+    networkMonitor: NetworkMonitor,
     selectedTheme: SerenadeThemeChoice,
     onThemeSelected: (SerenadeThemeChoice) -> Unit,
 ) {
     val navController = rememberNavController()
     val postSplashDestination = if (authRepository.isLoggedIn()) ROUTE_HOME else ROUTE_LOGIN
     val playbackState by playerController.state.collectAsState()
+    val isOnline by networkMonitor.isOnline.collectAsState(initial = true)
+    val scope = rememberCoroutineScope()
 
     var playbackQueue by remember { mutableStateOf<List<TrackEntity>>(emptyList()) }
     val nowPlayingTrack = remember(playbackQueue, playbackState.currentTrackId) {
@@ -139,155 +145,165 @@ fun AppNavigation(
     val currentRoute = backStack?.destination?.route
     val showBottomBar = currentRoute in TAB_ROUTES
 
-    Scaffold(
-        containerColor = SrBg,
-        bottomBar = {
-            if (showBottomBar) {
-                Column(
-                    modifier = Modifier
-                        .background(Color.Transparent)
-                        .navigationBarsPadding(),
-                ) {
-                    MiniPlayerBar(
-                        state = playbackState,
-                        trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle,
-                        trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist,
-                        artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
-                        onTogglePlayPause = playerController::togglePlayPause,
-                        onBarClick = {
-                            if (playbackState.currentTrackId != null) {
-                                navController.navigate(ROUTE_PLAYER)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = SrBg,
+            bottomBar = {
+                if (showBottomBar) {
+                    Column(
+                        modifier = Modifier
+                            .background(Color.Transparent)
+                            .navigationBarsPadding(),
+                    ) {
+                        MiniPlayerBar(
+                            state = playbackState,
+                            trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle,
+                            trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist,
+                            artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
+                            onTogglePlayPause = playerController::togglePlayPause,
+                            onBarClick = {
+                                if (playbackState.currentTrackId != null) {
+                                    navController.navigate(ROUTE_PLAYER)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        SrBottomNav(
+                            navController = navController,
+                            currentRoute = currentRoute,
+                        )
+                    }
+                }
+            },
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = ROUTE_SPLASH,
+                modifier = Modifier.padding(innerPadding),
+            ) {
+                composable(ROUTE_SPLASH) {
+                    SplashScreen(
+                        onFinished = {
+                            navController.navigate(postSplashDestination) {
+                                popUpTo(ROUTE_SPLASH) { inclusive = true }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
                     )
-                    SrBottomNav(
-                        navController = navController,
-                        currentRoute = currentRoute,
+                }
+                composable(ROUTE_LOGIN) {
+                    LoginScreen(
+                        onSuccess = {
+                            navController.navigate(ROUTE_HOME) {
+                                popUpTo(ROUTE_LOGIN) { inclusive = true }
+                            }
+                        },
+                        onNavigateToRegister = { navController.navigate(ROUTE_REGISTER) },
+                        isOnline = isOnline,
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_REGISTER) {
+                    RegisterScreen(
+                        onSuccess = {
+                            navController.navigate(ROUTE_HOME) {
+                                popUpTo(ROUTE_LOGIN) { inclusive = true }
+                            }
+                        },
+                        onNavigateToLogin = { navController.popBackStack() },
+                        selectedTheme = selectedTheme,
+                        onThemeSelected = onThemeSelected,
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_HOME) {
+                    TrackListScreen(
+                        onTrackClick = { track, allTracks -> playQueue(allTracks, track) },
+                        onSearchClick = { navController.navigate(ROUTE_SEARCH) },
+                        onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
+                        onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
+                        onUploadClick = { if (isOnline) navController.navigate(ROUTE_UPLOAD) },
+                        onAvatarClick = { navController.navigate(ROUTE_YOU) },
+                        modifier = Modifier.fillMaxSize(),
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_SEARCH) {
+                    SearchScreen(
+                        onTrackClick = { track, queue ->
+                            if (playResponseQueue(queue, track)) navController.navigate(ROUTE_PLAYER)
+                        },
+                        onBack = { navController.popBackStack() },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_LIBRARY) {
+                    LibraryScreen(
+                        onPlaylistClick = { playlistId ->
+                            navController.navigate("$ROUTE_PLAYLIST_DETAIL/$playlistId")
+                        },
+                        onBack = { navController.popBackStack() },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_DOWNLOADS) {
+                    DownloadScreen(
+                        onTrackClick = { track ->
+                            if (playQueue(listOf(track), track)) navController.navigate(ROUTE_PLAYER)
+                        },
+                        onBack = { navController.popBackStack() },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_YOU) {
+                    YouScreen(
+                        selectedTheme = selectedTheme,
+                        onThemeSelected = onThemeSelected,
+                        onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
+                        onLogout = {
+                            playerController.stopPlayback(clearPersistedQueue = true)
+                            playbackQueue = emptyList()
+                            scope.launch {
+                                authRepository.logout()
+                            }
+                            navController.navigate(ROUTE_LOGIN) {
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                composable(ROUTE_UPLOAD) {
+                    UploadScreen(
+                        onBack = { navController.popBackStack() },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable("$ROUTE_PLAYLIST_DETAIL/{$ARG_PLAYLIST_ID}") {
+                    PlaylistDetailScreen(
+                        onTrackClick = { track, queue ->
+                            if (playResponseQueue(queue, track)) navController.navigate(ROUTE_PLAYER)
+                        },
+                        onBack = { navController.popBackStack() },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(ROUTE_PLAYER) {
+                    PlayerScreen(
+                        trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle ?: "",
+                        trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist ?: "",
+                        trackDurationMs = nowPlayingTrack?.durationMs ?: playbackState.durationMs,
+                        artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
+                        onDismiss = { navController.popBackStack() },
+                        viewModel = hiltViewModel(),
                     )
                 }
             }
-        },
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = ROUTE_SPLASH,
-            modifier = Modifier.padding(innerPadding),
-        ) {
-            composable(ROUTE_SPLASH) {
-                SplashScreen(
-                    onFinished = {
-                        navController.navigate(postSplashDestination) {
-                            popUpTo(ROUTE_SPLASH) { inclusive = true }
-                        }
-                    },
-                )
-            }
-            composable(ROUTE_LOGIN) {
-                LoginScreen(
-                    onSuccess = {
-                        navController.navigate(ROUTE_HOME) {
-                            popUpTo(ROUTE_LOGIN) { inclusive = true }
-                        }
-                    },
-                    onNavigateToRegister = { navController.navigate(ROUTE_REGISTER) },
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_REGISTER) {
-                RegisterScreen(
-                    onSuccess = {
-                        navController.navigate(ROUTE_HOME) {
-                            popUpTo(ROUTE_LOGIN) { inclusive = true }
-                        }
-                    },
-                    onNavigateToLogin = { navController.popBackStack() },
-                    selectedTheme = selectedTheme,
-                    onThemeSelected = onThemeSelected,
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_HOME) {
-                TrackListScreen(
-                    onTrackClick = { track, allTracks -> playQueue(allTracks, track) },
-                    onSearchClick = { navController.navigate(ROUTE_SEARCH) },
-                    onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
-                    onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
-                    onUploadClick = { navController.navigate(ROUTE_UPLOAD) },
-                    onAvatarClick = { navController.navigate(ROUTE_YOU) },
-                    modifier = Modifier.fillMaxSize(),
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_SEARCH) {
-                SearchScreen(
-                    onTrackClick = { track, queue ->
-                        if (playResponseQueue(queue, track)) navController.navigate(ROUTE_PLAYER)
-                    },
-                    onBack = { navController.popBackStack() },
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_LIBRARY) {
-                LibraryScreen(
-                    onPlaylistClick = { playlistId ->
-                        navController.navigate("$ROUTE_PLAYLIST_DETAIL/$playlistId")
-                    },
-                    onBack = { navController.popBackStack() },
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_DOWNLOADS) {
-                DownloadScreen(
-                    onTrackClick = { track ->
-                        if (playQueue(listOf(track), track)) navController.navigate(ROUTE_PLAYER)
-                    },
-                    onBack = { navController.popBackStack() },
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_YOU) {
-                YouScreen(
-                    selectedTheme = selectedTheme,
-                    onThemeSelected = onThemeSelected,
-                    onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
-                    onLogout = {
-                        playerController.stopPlayback(clearPersistedQueue = true)
-                        playbackQueue = emptyList()
-                        authRepository.logout()
-                        navController.navigate(ROUTE_LOGIN) {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-            composable(ROUTE_UPLOAD) {
-                UploadScreen(
-                    onBack = { navController.popBackStack() },
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable("$ROUTE_PLAYLIST_DETAIL/{$ARG_PLAYLIST_ID}") {
-                PlaylistDetailScreen(
-                    onTrackClick = { track, queue ->
-                        if (playResponseQueue(queue, track)) navController.navigate(ROUTE_PLAYER)
-                    },
-                    onBack = { navController.popBackStack() },
-                    viewModel = hiltViewModel(),
-                )
-            }
-            composable(ROUTE_PLAYER) {
-                PlayerScreen(
-                    trackTitle = nowPlayingTrack?.title ?: playbackState.currentTitle ?: "",
-                    trackArtist = nowPlayingTrack?.artist ?: playbackState.currentArtist ?: "",
-                    trackDurationMs = nowPlayingTrack?.durationMs ?: playbackState.durationMs,
-                    artworkUrl = nowPlayingTrack?.artworkUrl ?: playbackState.currentArtworkUrl,
-                    onDismiss = { navController.popBackStack() },
-                    viewModel = hiltViewModel(),
-                )
-            }
         }
+
+        OfflineBanner(
+            isOnline = isOnline,
+            modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter),
+        )
     }
 }
 

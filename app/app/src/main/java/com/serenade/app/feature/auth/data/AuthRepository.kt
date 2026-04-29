@@ -10,6 +10,7 @@ import com.serenade.app.feature.auth.data.remote.dto.RegistrationResponse
 import com.serenade.app.feature.auth.data.remote.dto.ResendVerificationRequest
 import com.serenade.app.feature.auth.data.remote.dto.ResetPasswordRequest
 import com.serenade.app.feature.auth.data.remote.dto.VerifyEmailRequest
+import com.serenade.app.feature.playlist.data.PlaylistDao
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,6 +19,7 @@ class AuthRepository @Inject constructor(
     private val api: AuthApiService,
     private val tokenStore: SecureTokenStore,
     private val userDao: UserDao,
+    private val playlistDao: PlaylistDao,
 ) {
     suspend fun login(email: String, password: String) {
         val resp = api.login(LoginRequest(email, password))
@@ -56,7 +58,9 @@ class AuthRepository @Inject constructor(
 
     fun isLoggedIn(): Boolean = tokenStore.getAccessToken() != null
 
-    fun logout() {
+    suspend fun logout() {
+        playlistDao.deleteAllCrossRefs()
+        playlistDao.deleteAll()
         tokenStore.clear()
     }
 }

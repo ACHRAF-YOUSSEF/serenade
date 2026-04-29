@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.serenade.app.core.preferences.ThemePreferenceStore
 import com.serenade.app.core.navigation.AppNavigation
+import com.serenade.app.core.network.NetworkMonitor
 import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.ui.theme.AppTheme
@@ -28,6 +29,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var authRepository: AuthRepository
     @Inject lateinit var playerController: PlayerController
+    @Inject lateinit var networkMonitor: NetworkMonitor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +43,7 @@ class MainActivity : ComponentActivity() {
                 AppNavigation(
                     authRepository = authRepository,
                     playerController = playerController,
+                    networkMonitor = networkMonitor,
                     selectedTheme = selectedTheme,
                     onThemeSelected = { choice ->
                         scope.launch { themeStore.setTheme(choice) }

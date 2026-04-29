@@ -29,6 +29,7 @@ fun LibraryScreen(
     viewModel: LibraryViewModel,
 ) {
     val state by viewModel.state.collectAsState()
+    val selectedFilter by viewModel.filter.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
 
@@ -59,10 +60,26 @@ fun LibraryScreen(
                     modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    SrChip(label = "All", selected = true)
-                    SrChip(label = "Playlists")
-                    SrChip(label = "Albums")
-                    SrChip(label = "Downloaded")
+                    SrChip(
+                        label = "All",
+                        selected = selectedFilter == LibraryFilter.All,
+                        onClick = { viewModel.setFilter(LibraryFilter.All) },
+                    )
+                    SrChip(
+                        label = "Playlists",
+                        selected = selectedFilter == LibraryFilter.Playlists,
+                        onClick = { viewModel.setFilter(LibraryFilter.Playlists) },
+                    )
+                    SrChip(
+                        label = "Albums",
+                        selected = selectedFilter == LibraryFilter.Albums,
+                        onClick = { viewModel.setFilter(LibraryFilter.Albums) },
+                    )
+                    SrChip(
+                        label = "Downloaded",
+                        selected = selectedFilter == LibraryFilter.Downloaded,
+                        onClick = { viewModel.setFilter(LibraryFilter.Downloaded) },
+                    )
                 }
                 when (val s = state) {
                     is LibraryUiState.Loading -> Box(
@@ -85,7 +102,15 @@ fun LibraryScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text("No playlists yet", style = MaterialTheme.typography.bodyLarge, color = SrTextDim)
+                                Text(
+                                    text = when (s.filter) {
+                                        LibraryFilter.Albums -> "Albums coming soon"
+                                        LibraryFilter.Downloaded -> "No downloaded content"
+                                        else -> "No playlists yet"
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = SrTextDim,
+                                )
                             }
                         } else {
                             LazyColumn(

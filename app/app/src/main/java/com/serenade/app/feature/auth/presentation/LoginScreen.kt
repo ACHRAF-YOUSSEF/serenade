@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.dp
 fun LoginScreen(
     onSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    viewModel: AuthViewModel
+    viewModel: AuthViewModel,
+    isOnline: Boolean = true,
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -45,8 +46,8 @@ fun LoginScreen(
             }
             is AuthUiState.PasswordResetCodeSent -> {
                 email = (state as AuthUiState.PasswordResetCodeSent).email
-                mode = LoginMode.ResetPassword
-                notice = "Reset code sent. It expires in 10 minutes."
+                notice = "If that account exists, check your inbox for a reset code."
+                viewModel.resetState()
             }
             is AuthUiState.PasswordResetComplete -> {
                 mode = LoginMode.SignIn
@@ -108,6 +109,10 @@ fun LoginScreen(
             LoginMode.ForgotPassword -> ForgotPasswordFields(
                 email = email,
                 onEmailChange = { email = it },
+                onHaveCode = {
+                    notice = null
+                    mode = LoginMode.ResetPassword
+                },
             )
             LoginMode.ResetPassword -> ResetPasswordFields(
                 email = email,
@@ -140,6 +145,15 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        if (!isOnline) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "You're offline. Sign-in requires a connection.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
         Button(
             onClick = {
                 when (mode) {
@@ -149,7 +163,7 @@ fun LoginScreen(
                     LoginMode.ResetPassword -> viewModel.resetPassword(email.trim(), resetCode, newPassword)
                 }
             },
-            enabled = state !is AuthUiState.Loading && when (mode) {
+            enabled = isOnline && state !is AuthUiState.Loading && when (mode) {
                 LoginMode.SignIn -> true
                 LoginMode.VerifyEmail -> resetCode.length == 5
                 LoginMode.ForgotPassword -> email.isNotBlank()
@@ -266,6 +280,7 @@ private fun VerifyLoginFields(
 private fun ForgotPasswordFields(
     email: String,
     onEmailChange: (String) -> Unit,
+    onHaveCode: () -> Unit,
 ) {
     Text(
         text = "We'll send a reset code if that account exists.",
@@ -283,6 +298,12 @@ private fun ForgotPasswordFields(
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    TextButton(onClick = onHaveCode, modifier = Modifier.fillMaxWidth()) {
+        Text("I already have a reset code →")
+    }
 }
 
 @Composable
