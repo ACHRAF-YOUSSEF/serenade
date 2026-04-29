@@ -1,6 +1,7 @@
 # Tasks Index
 
 ## In Progress
+- [TASK039] Email Verification and Password Reset
 
 ## Pending
 
