@@ -2,6 +2,7 @@ package com.serenade.app.feature.track.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.serenade.app.feature.auth.data.UserDao
 import com.serenade.app.feature.download.data.DownloadRepository
 import com.serenade.app.feature.download.data.entity.DownloadEntity
 import com.serenade.app.feature.sync.data.SyncRepository
@@ -23,6 +24,7 @@ class TrackListViewModel @Inject constructor(
     private val repo: TrackSyncRepository,
     private val downloadRepository: DownloadRepository,
     private val syncRepository: SyncRepository,
+    userDao: UserDao,
 ) : ViewModel() {
 
     private val _syncing = MutableStateFlow(false)
@@ -31,6 +33,10 @@ class TrackListViewModel @Inject constructor(
     val downloadsByTrackId: StateFlow<Map<String, DownloadEntity>> = downloadRepository.downloads()
         .map { downloads -> downloads.associateBy { it.trackId } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val displayName: StateFlow<String?> = userDao.getCurrentUser()
+        .map { user -> user?.username?.takeIf { it.isNotBlank() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val state: StateFlow<TrackListUiState> = repo.tracks()
         .map<List<TrackEntity>, TrackListUiState> { TrackListUiState.Ready(it) }

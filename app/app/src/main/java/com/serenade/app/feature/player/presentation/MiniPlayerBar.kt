@@ -63,10 +63,10 @@ fun MiniPlayerBar(
                         )
                     )
                     .border(1.dp, SrLineHi, RoundedCornerShape(14.dp))
-                    .clickable(onClick = onBarClick)
-                    .padding(8.dp),
+                    .clickable(onClick = onBarClick),
             ) {
                 Row(
+                    modifier = Modifier.padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -133,8 +133,8 @@ fun MiniPlayerBar(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
-                            .padding(horizontal = 8.dp)
-                            .padding(bottom = 0.dp)
+                            .padding(horizontal = 12.dp)
+                            .padding(bottom = 4.dp)
                             .fillMaxWidth()
                             .height(2.dp)
                             .clip(RoundedCornerShape(1.dp))

@@ -44,6 +44,7 @@ fun TrackListScreen(
     val state by viewModel.state.collectAsState()
     val syncing by viewModel.syncing.collectAsState()
     val downloadsByTrackId by viewModel.downloadsByTrackId.collectAsState()
+    val displayName by viewModel.displayName.collectAsState()
 
     Box(
         modifier = modifier.background(SrBg),
@@ -59,7 +60,7 @@ fun TrackListScreen(
             ) {
                 // ── Atmospheric header ──
                 item {
-                    HomeHeader(onSearchClick = onSearchClick)
+                    HomeHeader(displayName = displayName, onSearchClick = onSearchClick)
                 }
 
                 when (val s = state) {
@@ -97,11 +98,11 @@ fun TrackListScreen(
                             }
                         } else {
                             item {
-                                SrSectionHeader(
-                                    title = "All tracks",
-                                    eyebrow = "Your library",
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
+                SrSectionHeader(
+                    title = "All tracks",
+                    eyebrow = "Your library",
+                    modifier = Modifier.padding(top = 8.dp),
+                )
                             }
                             items(s.tracks, key = { it.id }) { track ->
                                 SrTrackRow(
@@ -121,11 +122,20 @@ fun TrackListScreen(
 }
 
 @Composable
-private fun HomeHeader(onSearchClick: () -> Unit) {
+private fun HomeHeader(
+    displayName: String?,
+    onSearchClick: () -> Unit,
+) {
+    val avatarText = displayName
+        ?.trim()
+        ?.firstOrNull()
+        ?.uppercaseChar()
+        ?.toString()
+        ?: "U"
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .height(150.dp)
             .background(
                 Brush.radialGradient(
                     colors = listOf(SrPlum.copy(alpha = 0.55f), Color.Transparent),
@@ -141,7 +151,7 @@ private fun HomeHeader(onSearchClick: () -> Unit) {
                     Brush.radialGradient(
                         colors = listOf(SrCoral.copy(alpha = 0.2f), Color.Transparent),
                         radius = 500f,
-                        center = androidx.compose.ui.geometry.Offset(Float.MAX_VALUE, 0f),
+                        center = androidx.compose.ui.geometry.Offset(900f, 0f),
                     )
                 ),
         )
@@ -183,7 +193,7 @@ private fun HomeHeader(onSearchClick: () -> Unit) {
                             ),
                     ) {
                         Text(
-                            text = "J",
+                            text = avatarText,
                             style = MaterialTheme.typography.titleSmall,
                             color = SrText,
                         )
