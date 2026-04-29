@@ -205,7 +205,7 @@ fun SrScreenBackground(modifier: Modifier = Modifier, content: @Composable BoxSc
                 .background(
                     Brush.radialGradient(
                         colors = listOf(SrCoral.copy(alpha = 0.16f), Color.Transparent),
-                        center = Offset(Float.MAX_VALUE, 0f),
+                        center = Offset(1200f, 0f),
                         radius = 620f,
                     )
                 ),
