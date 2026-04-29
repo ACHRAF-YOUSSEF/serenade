@@ -46,7 +46,8 @@ fun LoginScreen(
             }
             is AuthUiState.PasswordResetCodeSent -> {
                 email = (state as AuthUiState.PasswordResetCodeSent).email
-                notice = "If that account exists, check your inbox for a reset code."
+                mode = LoginMode.ResetPassword
+                notice = "Reset code sent. It expires in 10 minutes."
                 viewModel.resetState()
             }
             is AuthUiState.PasswordResetComplete -> {

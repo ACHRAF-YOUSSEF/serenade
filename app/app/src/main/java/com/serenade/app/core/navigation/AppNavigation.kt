@@ -234,6 +234,7 @@ fun AppNavigation(
                         },
                         onBack = { navController.popBackStack() },
                         viewModel = hiltViewModel(),
+                        isOnline = isOnline,
                     )
                 }
                 composable(ROUTE_LIBRARY) {

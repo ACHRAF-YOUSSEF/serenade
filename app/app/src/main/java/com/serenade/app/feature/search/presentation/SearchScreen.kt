@@ -33,6 +33,7 @@ fun SearchScreen(
     onTrackClick: (TrackResponse, List<TrackResponse>) -> Unit,
     onBack: () -> Unit,
     viewModel: SearchViewModel,
+    isOnline: Boolean = true,
 ) {
     val query by viewModel.query.collectAsState()
     val selectedGenres by viewModel.genres.collectAsState()
@@ -87,6 +88,16 @@ fun SearchScreen(
                 }
 
                 when {
+                    !isOnline -> Box(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Search unavailable offline",
+                            color = SrTextDim,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                     error != null -> Box(
                         modifier = Modifier.fillMaxSize().padding(24.dp),
                         contentAlignment = Alignment.Center,
@@ -102,6 +113,16 @@ fun SearchScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(color = SrPrimary)
+                    }
+                    results.isEmpty() && !query.isBlank() -> Box(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "No results for \"$query\"",
+                            color = SrTextDim,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                     else -> LazyColumn(
                         modifier = Modifier.fillMaxSize(),
