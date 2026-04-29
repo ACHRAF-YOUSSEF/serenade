@@ -62,16 +62,16 @@ private fun TrackResponse.toEntity() = TrackEntity(
 private fun TrackEntity.playbackUri(): String? =
     localPath?.let { Uri.fromFile(File(it)).toString() } ?: streamUrl
 
-private const val ROUTE_LOGIN    = "login"
+private const val ROUTE_LOGIN = "login"
 private const val ROUTE_REGISTER = "register"
-private const val ROUTE_SPLASH   = "splash"
-private const val ROUTE_HOME     = "home"
-private const val ROUTE_SEARCH   = "search"
-private const val ROUTE_LIBRARY  = "library"
+private const val ROUTE_SPLASH = "splash"
+private const val ROUTE_HOME = "home"
+private const val ROUTE_SEARCH = "search"
+private const val ROUTE_LIBRARY = "library"
 private const val ROUTE_DOWNLOADS = "downloads"
-private const val ROUTE_UPLOAD   = "upload"
-private const val ROUTE_YOU      = "you"
-private const val ROUTE_PLAYER   = "player"
+private const val ROUTE_UPLOAD = "upload"
+private const val ROUTE_YOU = "you"
+private const val ROUTE_PLAYER = "player"
 private const val ROUTE_PLAYLIST_DETAIL = "playlist"
 private const val ARG_PLAYLIST_ID = "playlistId"
 
@@ -83,11 +83,11 @@ private data class NavTab(
 )
 
 private val TABS = listOf(
-    NavTab(ROUTE_HOME,    "Listen",  Icons.Filled.Home,        Icons.Outlined.Home),
-    NavTab(ROUTE_SEARCH,  "Search",  Icons.Filled.Search,      Icons.Outlined.Search),
+    NavTab(ROUTE_HOME, "Listen", Icons.Filled.Home, Icons.Outlined.Home),
+    NavTab(ROUTE_SEARCH, "Search", Icons.Filled.Search, Icons.Outlined.Search),
     NavTab(ROUTE_LIBRARY, "Library", Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
-    NavTab(ROUTE_UPLOAD,  "Studio",  Icons.Filled.CloudUpload,  Icons.Outlined.CloudUpload),
-    NavTab(ROUTE_YOU,     "You",     Icons.Filled.Person,       Icons.Outlined.Person),
+    NavTab(ROUTE_UPLOAD, "Studio", Icons.Filled.CloudUpload, Icons.Outlined.CloudUpload),
+    NavTab(ROUTE_YOU, "You", Icons.Filled.Person, Icons.Outlined.Person),
 )
 
 private val TAB_ROUTES = TABS.map { it.route }.toSet()
@@ -214,6 +214,7 @@ fun AppNavigation(
                     onLibraryClick = { navController.navigate(ROUTE_LIBRARY) },
                     onDownloadsClick = { navController.navigate(ROUTE_DOWNLOADS) },
                     onUploadClick = { navController.navigate(ROUTE_UPLOAD) },
+                    onAvatarClick = { navController.navigate(ROUTE_YOU) },
                     modifier = Modifier.fillMaxSize(),
                     viewModel = hiltViewModel(),
                 )

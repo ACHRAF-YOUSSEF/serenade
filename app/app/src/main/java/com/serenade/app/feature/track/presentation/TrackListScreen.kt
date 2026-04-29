@@ -38,6 +38,7 @@ fun TrackListScreen(
     onLibraryClick: () -> Unit,
     onDownloadsClick: () -> Unit,
     onUploadClick: () -> Unit,
+    onAvatarClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TrackListViewModel,
 ) {
@@ -58,15 +59,20 @@ fun TrackListScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 16.dp),
             ) {
-                // ── Atmospheric header ──
                 item {
-                    HomeHeader(displayName = displayName, onSearchClick = onSearchClick)
+                    HomeHeader(
+                        displayName = displayName,
+                        onSearchClick = onSearchClick,
+                        onAvatarClick = onAvatarClick,
+                    )
                 }
 
                 when (val s = state) {
                     is TrackListUiState.Loading -> item {
                         Box(
-                            modifier = Modifier.fillMaxWidth().height(200.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             CircularProgressIndicator(color = SrPrimary)
@@ -75,10 +81,16 @@ fun TrackListScreen(
 
                     is TrackListUiState.Error -> item {
                         Box(
-                            modifier = Modifier.fillMaxWidth().padding(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(s.message, color = SrCoral, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                s.message,
+                                color = SrCoral,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
 
@@ -86,7 +98,9 @@ fun TrackListScreen(
                         if (s.tracks.isEmpty()) {
                             item {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().padding(48.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(48.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
@@ -98,11 +112,11 @@ fun TrackListScreen(
                             }
                         } else {
                             item {
-                SrSectionHeader(
-                    title = "All tracks",
-                    eyebrow = "Your library",
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                                SrSectionHeader(
+                                    title = "All tracks",
+                                    eyebrow = "Your library",
+                                    modifier = Modifier.padding(top = 8.dp),
+                                )
                             }
                             items(s.tracks, key = { it.id }) { track ->
                                 SrTrackRow(
@@ -125,6 +139,7 @@ fun TrackListScreen(
 private fun HomeHeader(
     displayName: String?,
     onSearchClick: () -> Unit,
+    onAvatarClick: () -> Unit,
 ) {
     val avatarText = displayName
         ?.trim()
@@ -143,7 +158,6 @@ private fun HomeHeader(
                 )
             ),
     ) {
-        // subtle coral accent top-right
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -182,7 +196,6 @@ private fun HomeHeader(
                     IconButton(onClick = onSearchClick) {
                         Icon(Icons.Default.Search, contentDescription = "Search", tint = SrText)
                     }
-                    // Avatar placeholder
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -192,11 +205,13 @@ private fun HomeHeader(
                                 Brush.linearGradient(listOf(SrCoral, SrPlum))
                             ),
                     ) {
-                        Text(
-                            text = avatarText,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = SrText,
-                        )
+                        IconButton(onClick = onAvatarClick) {
+                            Text(
+                                text = avatarText,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SrText,
+                            )
+                        }
                     }
                 }
             }
@@ -220,8 +235,11 @@ private fun SrTrackRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Artwork
-        Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(6.dp))) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(6.dp))
+        ) {
             ArtworkAvatar(seed = track.title, size = 42.dp, cornerRadius = 6.dp)
             if (!track.artworkUrl.isNullOrBlank()) {
                 AsyncImage(
@@ -233,7 +251,6 @@ private fun SrTrackRow(
             }
         }
 
-        // Title + artist
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = track.title,
@@ -251,7 +268,6 @@ private fun SrTrackRow(
             )
         }
 
-        // Duration
         track.durationMs.takeIf { it > 0 }?.let {
             Text(
                 text = formatDuration(it),
@@ -260,7 +276,6 @@ private fun SrTrackRow(
             )
         }
 
-        // Download indicator
         SrDownloadAction(
             download = download,
             hasStream = !track.streamUrl.isNullOrBlank(),
@@ -268,7 +283,12 @@ private fun SrTrackRow(
             onDeleteDownload = onDeleteDownload,
         )
 
-        Icon(Icons.Outlined.MoreVert, contentDescription = null, tint = SrTextMute, modifier = Modifier.size(18.dp))
+        Icon(
+            Icons.Outlined.MoreVert,
+            contentDescription = null,
+            tint = SrTextMute,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 
@@ -285,9 +305,12 @@ private fun SrDownloadAction(
                 Icons.Default.DownloadDone,
                 contentDescription = "Downloaded",
                 tint = SrPrimary,
-                modifier = Modifier.size(16.dp).clickable(onClick = onDeleteDownload),
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable(onClick = onDeleteDownload),
             )
         }
+
         DownloadState.DOWNLOADING, DownloadState.QUEUED -> {
             CircularProgressIndicator(
                 progress = { (download.progress / 100f).coerceIn(0f, 1f) },
@@ -296,13 +319,16 @@ private fun SrDownloadAction(
                 strokeWidth = 2.dp,
             )
         }
+
         else -> {
             if (hasStream) {
                 Icon(
                     Icons.Default.Download,
                     contentDescription = "Download",
                     tint = SrTextMute,
-                    modifier = Modifier.size(16.dp).clickable(onClick = onDownloadClick),
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable(onClick = onDownloadClick),
                 )
             }
         }
