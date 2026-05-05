@@ -1,45 +1,80 @@
 package com.serenade.app
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.serenade.app.core.preferences.ThemePreferenceStore
 import com.serenade.app.core.navigation.AppNavigation
+import com.serenade.app.core.network.NetworkMonitor
 import com.serenade.app.feature.auth.data.AuthRepository
 import com.serenade.app.feature.player.PlayerController
 import com.serenade.app.ui.theme.AppTheme
+import com.serenade.app.ui.theme.SerenadeThemeChoice
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var authRepository: AuthRepository
 
-    @Inject lateinit var authRepository: AuthRepository
-    @Inject lateinit var playerController: PlayerController
+    @Inject
+    lateinit var playerController: PlayerController
+
+    @Inject
+    lateinit var networkMonitor: NetworkMonitor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestNotificationPermissionIfNeeded()
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            val themeStore = remember { ThemePreferenceStore(applicationContext) }
+            val selectedTheme by themeStore.selectedTheme.collectAsState(initial = SerenadeThemeChoice.Midnight)
+            val scope = rememberCoroutineScope()
+            AppTheme(themeChoice = selectedTheme) {
                 AppNavigation(
                     authRepository = authRepository,
                     playerController = playerController,
+                    networkMonitor = networkMonitor,
+                    selectedTheme = selectedTheme,
+                    onThemeSelected = { choice ->
+                        scope.launch { themeStore.setTheme(choice) }
+                        val isAuroraTheme = choice == SerenadeThemeChoice.Aurora
+                        updateAppIcon(
+                            context = this@MainActivity,
+                            isAuroraTheme = isAuroraTheme
+                        )
+                    },
                 )
             }
         }
     }
 
+    override fun onDestroy() {
+        if (isFinishing) {
+            playerController.stopPlayback(clearPersistedQueue = false)
+        }
+        super.onDestroy()
+    }
+
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
+            != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
                 this,
@@ -47,5 +82,37 @@ class MainActivity : ComponentActivity() {
                 0,
             )
         }
+    }
+}
+
+fun updateAppIcon(context: Context, isAuroraTheme: Boolean) {
+    val packageManager = context.packageManager
+    val packageName = context.packageName
+
+    val midnightComponent = ComponentName(packageName, "$packageName.MainActivityMidnight")
+    val auroraComponent = ComponentName(packageName, "$packageName.MainActivityAurora")
+
+    if (isAuroraTheme) {
+        packageManager.setComponentEnabledSetting(
+            auroraComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        packageManager.setComponentEnabledSetting(
+            midnightComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    } else {
+        packageManager.setComponentEnabledSetting(
+            midnightComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        packageManager.setComponentEnabledSetting(
+            auroraComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
     }
 }

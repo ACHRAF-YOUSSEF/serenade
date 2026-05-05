@@ -81,4 +81,10 @@ interface PlaylistDao {
 
     @Query("DELETE FROM playlist_track_cross_refs WHERE playlistId = :playlistId")
     suspend fun clearTracksForPlaylist(playlistId: String)
+
+    @Query("DELETE FROM playlists")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM playlist_track_cross_refs")
+    suspend fun deleteAllCrossRefs()
 }

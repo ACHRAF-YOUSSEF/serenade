@@ -3,6 +3,7 @@ package com.serenade.app.feature.search.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenade.app.core.database.Genre
+import com.serenade.app.feature.track.data.remote.TrackApiService
 import com.serenade.app.feature.track.data.remote.dto.TrackResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val api: SearchApiService,
+    private val trackApi: TrackApiService,
 ) : ViewModel() {
 
     private val allGenres: Set<String> = Genre.entries.map { it.name }.toSet()
@@ -44,8 +46,16 @@ class SearchViewModel @Inject constructor(
                 _loading.value = true
                 try {
                     _error.value = null
-                    val genresParam = if (g == allGenres) null else g.joinToString(",")
-                    emit(api.search(q = q, genres = genresParam).content)
+                    if (q.isBlank()) {
+                        if (g == allGenres) {
+                            emit(trackApi.getTracks(size = 40).content)
+                        } else {
+                            emit(api.search(q = "", genres = g.joinToString(",")).content)
+                        }
+                    } else {
+                        val genresParam = if (g == allGenres) null else g.joinToString(",")
+                        emit(api.search(q = q, genres = genresParam).content)
+                    }
                 } catch (e: Exception) {
                     _error.value = e.message ?: "Search failed"
                     emit(emptyList())

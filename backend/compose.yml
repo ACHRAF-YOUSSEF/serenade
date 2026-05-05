@@ -78,6 +78,17 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: serenade-mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAIL_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+    expose:
+      - 1025
+      - 8025
+
 volumes:
   serenade-postgres-data:
   serenade-redis-data:

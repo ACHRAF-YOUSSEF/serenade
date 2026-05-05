@@ -1,5 +1,26 @@
+# Python cache
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+
+# Virtualenv
+.venv/
+venv/
+
+# Tests
+**/.pytest_cache/
+**/tests/
+
+# Secrets — never send to daemon
+.env
+.env.*
 **/.env
 **/.env.*
+
+# Docs / meta
+*.md
+.gitignore
+.dockerignore
+
+# Git
+.git/

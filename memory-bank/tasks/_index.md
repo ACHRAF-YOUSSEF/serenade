@@ -5,6 +5,15 @@
 ## Pending
 
 ## Completed
+- [TASK044] Home Header and Mini Player Polish - Completed on 2026-04-29
+- [TASK043] Signup Code Boxes and Theme Setup - Completed on 2026-04-29
+- [TASK042] Theme Preview Colors - Completed on 2026-04-29
+- [TASK041] Stop Media on Logout and App Close - Completed on 2026-04-29
+- [TASK040] You UI and Flyway Checksum Fix - Completed on 2026-04-29
+- [TASK039] Email Verification and Password Reset - Completed on 2026-04-29
+- [TASK038] Upload Studio and Downloads Design - Completed on 2026-04-29
+- [TASK037] Splash You Theme Logo - Completed on 2026-04-29
+- [TASK036] Serenade Handoff Design Implementation - Completed on 2026-04-29
 - [TASK035] Collaboration Docs Tracking - Completed on 2026-04-26
 - [TASK034] Persisted Playback Queue and History - Completed on 2026-04-26
 - [TASK033] HLS Seekability Fix - Completed on 2026-04-26

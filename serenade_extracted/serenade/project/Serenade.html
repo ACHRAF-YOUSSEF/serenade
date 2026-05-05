@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1400">
+<title>Serenade — Mobile App Design</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; }
+</style>
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6B3F8E"/>
+        <stop offset="1" stop-color="#E8B07A"/>
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" fill="#0B0612"/>
+    <circle cx="50" cy="50" r="30" fill="url(#g)"/>
+    <text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="32" fill="#0B0612">S</text>
+  </svg>
+</template>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="atoms.jsx"></script>
+<script type="text/babel" src="screens-ds.jsx"></script>
+<script type="text/babel" src="screens-1.jsx"></script>
+<script type="text/babel" src="screens-2.jsx"></script>
+<script type="text/babel" src="screens-3.jsx"></script>
+<script type="text/babel" src="screens-signup.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "theme": "aurora"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAKS);
+  const T = tweaks.theme === 'aurora' ? AURORA : SERENADE;
+
+  // tint canvas bg subtly to the active theme
+  React.useEffect(() => {
+    document.body.style.background = '#f0eee9';
+  }, []);
+
+  const A = (id, label, w, h, children) => (
+    <DCArtboard id={id} label={label} width={w} height={h}>{children}</DCArtboard>
+  );
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="brand" title="Serenade" subtitle="Brand direction & design system">
+          <DCArtboard id="direction" label="Creative direction" width={720} height={460}>
+            <DirectionCard theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="palette" label="Color palette" width={720} height={680}>
+            <PaletteCard theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="type" label="Typography" width={720} height={760}>
+            <TypeCard theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="components" label="Components" width={720} height={780}>
+            <ComponentsCard theme={T}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="onboarding" title="Onboarding" subtitle="First-launch · auth · biometric">
+          <DCArtboard id="splash" label="01 · Splash" width={360} height={760}>
+            <SplashScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="welcome" label="02 · Welcome" width={360} height={760}>
+            <WelcomeScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="signin" label="03 · Sign in" width={360} height={760}>
+            <SignInScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="biometric" label="04 · Biometric prompt" width={360} height={760}>
+            <BiometricSheet theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="signup-1" label="05 · Sign up · 1 of 3" width={360} height={760}>
+            <SignupWizard theme={T} step={1}/>
+          </DCArtboard>
+          <DCArtboard id="signup-2" label="06 · Sign up · 2 of 3 (verify)" width={360} height={760}>
+            <SignupWizard theme={T} step={2}/>
+          </DCArtboard>
+          <DCArtboard id="signup-3" label="07 · Sign up · 3 of 3 (secure)" width={360} height={760}>
+            <SignupWizard theme={T} step={3}/>
+          </DCArtboard>
+          <DCArtboard id="setup" label="08 · Setup · preferences (skippable)" width={360} height={760}>
+            <SetupScreen theme={T}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="discover" title="Discover" subtitle="Home · search · library">
+          <DCArtboard id="home" label="05 · Home" width={360} height={760}>
+            <HomeScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="search" label="06 · Search & genres" width={360} height={760}>
+            <SearchScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="library" label="07 · Library" width={360} height={760}>
+            <LibraryScreen theme={T}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="player" title="Player" subtitle="Now playing · lyrics · notification">
+          <DCArtboard id="np" label="08 · Now playing" width={360} height={760}>
+            <NowPlayingScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="lyrics" label="09 · Lyrics (synced)" width={360} height={760}>
+            <LyricsScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="notif" label="10 · Lock-screen notification" width={360} height={760}>
+            <NotificationScreen theme={T}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="playlists" title="Playlists" subtitle="Detail · create · remix">
+          <DCArtboard id="pl-detail" label="11 · Playlist detail" width={360} height={760}>
+            <PlaylistDetailScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="pl-create" label="12 · Create / edit" width={360} height={760}>
+            <CreatePlaylistScreen theme={T}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="other" title="Studio · Sources · You" subtitle="Upload · providers · settings · downloads">
+          <DCArtboard id="downloads" label="13 · Downloads" width={360} height={760}>
+            <DownloadsScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="upload" label="14 · Upload to Studio" width={360} height={760}>
+            <UploadScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="providers" label="15 · Providers" width={360} height={760}>
+            <ProvidersScreen theme={T}/>
+          </DCArtboard>
+          <DCArtboard id="settings" label="16 · Settings · You" width={360} height={760}>
+            <SettingsScreen theme={T}/>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Theme">
+          <TweakRadio
+            label="Visual theme"
+            value={tweaks.theme}
+            options={[
+              { value: 'velvet', label: 'Midnight Velvet' },
+              { value: 'aurora', label: 'Aurora Pulse' },
+            ]}
+            onChange={v => setTweak('theme', v)}
+          />
+          <div style={{ fontSize: 11, color: '#6b6258', lineHeight: 1.5, marginTop: 6 }}>
+            Velvet — plum & copper, after-hours warmth.<br/>
+            Aurora — electric blue & teal, late-night cinema.
+          </div>
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

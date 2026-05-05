@@ -4,17 +4,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.serenade.app.feature.playlist.data.remote.dto.PlaylistSummaryResponse
+import com.serenade.app.ui.design.ArtworkAvatar
+import com.serenade.app.ui.design.SrChip
+import com.serenade.app.ui.design.SrScreenBackground
+import com.serenade.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,57 +29,101 @@ fun LibraryScreen(
     viewModel: LibraryViewModel,
 ) {
     val state by viewModel.state.collectAsState()
+    val selectedFilter by viewModel.filter.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
 
     Scaffold(
+        containerColor = SrBg,
         topBar = {
             TopAppBar(
-                title = { Text("Library") },
+                title = {
+                    Text("Your library", style = MaterialTheme.typography.displaySmall, color = SrText)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SrText)
                     }
                 },
                 actions = {
                     IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Create playlist")
+                        Icon(Icons.Default.Add, contentDescription = "Create playlist", tint = SrText)
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SrBg),
             )
         },
     ) { padding ->
-        when (val s = state) {
-            is LibraryUiState.Loading -> Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-
-            is LibraryUiState.Error -> Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(s.message, color = MaterialTheme.colorScheme.error)
-            }
-
-            is LibraryUiState.Ready -> {
-                if (s.playlists.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(padding),
+        SrScreenBackground(modifier = Modifier.padding(padding)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SrChip(
+                        label = "All",
+                        selected = selectedFilter == LibraryFilter.All,
+                        onClick = { viewModel.setFilter(LibraryFilter.All) },
+                    )
+                    SrChip(
+                        label = "Playlists",
+                        selected = selectedFilter == LibraryFilter.Playlists,
+                        onClick = { viewModel.setFilter(LibraryFilter.Playlists) },
+                    )
+                    SrChip(
+                        label = "Albums",
+                        selected = selectedFilter == LibraryFilter.Albums,
+                        onClick = { viewModel.setFilter(LibraryFilter.Albums) },
+                    )
+                    SrChip(
+                        label = "Downloaded",
+                        selected = selectedFilter == LibraryFilter.Downloaded,
+                        onClick = { viewModel.setFilter(LibraryFilter.Downloaded) },
+                    )
+                }
+                when (val s = state) {
+                    is LibraryUiState.Loading -> Box(
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("No playlists yet", style = MaterialTheme.typography.bodyLarge)
+                        CircularProgressIndicator(color = SrPrimary)
                     }
-                } else {
-                    LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-                        items(s.playlists, key = { it.id }) { playlist ->
-                            PlaylistRow(
-                                playlist = playlist,
-                                onClick = { onPlaylistClick(playlist.id) },
-                            )
-                            HorizontalDivider()
+
+                    is LibraryUiState.Error -> Box(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(s.message, color = SrCoral)
+                    }
+
+                    is LibraryUiState.Ready -> {
+                        if (s.playlists.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = when (s.filter) {
+                                        LibraryFilter.Albums -> "Albums coming soon"
+                                        LibraryFilter.Downloaded -> "No downloaded content"
+                                        else -> "No playlists yet"
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = SrTextDim,
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(top = 10.dp, bottom = 20.dp),
+                            ) {
+                                items(s.playlists, key = { it.id }) { playlist ->
+                                    PlaylistRow(
+                                        playlist = playlist,
+                                        onClick = { onPlaylistClick(playlist.id) },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -115,6 +164,9 @@ fun LibraryScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             },
+            containerColor = SrSurface,
+            titleContentColor = SrText,
+            textContentColor = SrTextDim,
         )
     }
 }
@@ -124,22 +176,37 @@ private fun PlaylistRow(
     playlist: PlaylistSummaryResponse,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        headlineContent = {
-            Text(playlist.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        },
-        supportingContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ArtworkAvatar(
+            seed = playlist.name,
+            size = 48.dp,
+            cornerRadius = 9.dp,
+            modifier = Modifier.clip(RoundedCornerShape(9.dp)),
+        )
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                "${playlist.trackCount} tracks • rating ${formatRating(playlist.ratingAvg)}",
+                playlist.name,
+                style = MaterialTheme.typography.titleSmall,
+                color = SrText,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        },
-        leadingContent = {
-            Icon(Icons.Default.LibraryMusic, contentDescription = null)
-        },
-        modifier = Modifier.clickable(onClick = onClick),
-    )
+            Text(
+                "${playlist.trackCount} tracks • rating ${formatRating(playlist.ratingAvg)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = SrTextDim,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
 private fun formatRating(value: Double): String = if (value <= 0.0) "none" else "%.1f".format(value)
