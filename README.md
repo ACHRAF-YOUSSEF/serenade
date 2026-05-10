@@ -37,6 +37,14 @@ memory-bank/      ← project memory (read before contributing)
 - **Sync** — cursor-based `GET /api/changes`, periodic WorkManager sync
 - **Outbox** — offline mutations (playlist/rating/reorder/upload) queue in Room, flush on sync
 
+## Star History
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ACHRAF-YOUSSEF/serenade&type=date&theme=dark&legend=top-left" />
+  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ACHRAF-YOUSSEF/serenade&type=date&legend=top-left" />
+  <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ACHRAF-YOUSSEF/serenade&type=date&legend=top-left" />
+</picture>
+
 ## Architecture
 
 ```

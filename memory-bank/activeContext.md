@@ -1,6 +1,6 @@
 # Active Context
 
-Current focus: Post-TASK044 — Home header and mini-player polish complete.
+Current focus: Post-TASK045 — README Star History chart added.
 
 Completed build slices:
 - Mobile M1: build wiring stable.
@@ -56,6 +56,7 @@ Latest playback lifecycle fix: Logout stops playback before clearing auth state,
 Latest theme preview fix: You screen theme options now build preview swatches from `colorsFor(choice)` instead of current live palette values. This keeps Midnight Velvet and Aurora Pulse previews distinct after either theme is selected. Verified `./gradlew :app:compileDebugKotlin`.
 Latest signup setup polish: `DigitCodeField` provides five separated numeric boxes for verification/reset code entry. Register verification, unverified-login verification, and reset password use it. Signup now has step 3/3 after email verification with an optional persisted theme picker; Skip or Tune & enter moves to home. Verified `./gradlew :app:compileDebugKotlin`.
 Latest home polish: Listen header avatar now uses saved user display name/username first initial with `U` fallback instead of hardcoded `J`. The Good evening header height is reduced to `150.dp`; its right radial gradient uses a finite center. Mini-player progress bar is lowered closer to the bottom card edge. Verified `./gradlew :app:compileDebugKotlin`.
+Latest README update: README now includes a live Star History chart for `ACHRAF-YOUSSEF/serenade` using a dark/light `<picture>` embed from Star History.
 Known connectivity limitation: physical devices still need `SERENADE_API_BASE_URL=http://<host-lan-ip>:8080/` when building/installing the app.
 Known artwork limitation: artwork presigned URLs expire in ≤15 min; app re-fetches fresh URLs on next sync. Coil caches in memory/disk so expiry only affects cold loads.
 Latest artwork fix: UI should not use stored MinIO presigned artwork URLs directly. Backend exposes stable `GET /artwork/{trackId}` and Android normalizes nonblank artwork markers to `${BuildConfig.API_BASE_URL}/artwork/{trackId}` in `stableArtworkUrl(...)`. This lets Coil load uploaded artwork from the same backend host used by the phone/emulator and avoids expired/direct MinIO URLs.
